@@ -1,0 +1,52 @@
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ExpoModulesGradlePlugin.kt b/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ExpoModulesGradlePlugin.kt
+index 1234567..7654321 100644
+--- a/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ExpoModulesGradlePlugin.kt
++++ b/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ExpoModulesGradlePlugin.kt
+@@ -7,7 +7,7 @@ import org.gradle.api.Project
+ import org.gradle.kotlin.dsl.extra
+ import org.gradle.kotlin.dsl.withType
+ 
+-class ExpoModulesGradlePlugin : Plugin<Project> {
++class ExpoModulesGradlePlugin : Plugin<Project> {
+     override fun apply(project: Project) {
+         project.extensions.create<ExpoModuleExtension>("expoModule")
+ 
+@@ -42,7 +42,7 @@ class ExpoModulesGradlePlugin : Plugin<Project> {
+             }
+         }
+ 
+-        project.extra["expoModule"] = true
++        project.extensions.extraProperties.set("expoModule", true)
+     }
+ }
+ 
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ProjectConfiguration.kt b/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ProjectConfiguration.kt
+index 1234567..7654321 100644
+--- a/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ProjectConfiguration.kt
++++ b/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ProjectConfiguration.kt
+@@ -15,7 +15,7 @@ import org.gradle.kotlin.dsl.withType
+ 
+ class ProjectConfiguration(private val project: Project) {
+     init {
+-        project.extensions.create<ExpoModuleExtension>("expoModule")
++        project.extensions.create<ExpoModuleExtension>("expoModule")
+     }
+ 
+     fun configure() {
+@@ -31,7 +31,7 @@ class ProjectConfiguration(private val project: Project) {
+             }
+         }
+ 
+-        project.extra["expoModule"] = true
++        project.extensions.extraProperties.set("expoModule", true)
+     }
+ 
+     private fun configureKotlin() {
+@@ -50,7 +50,7 @@ class ProjectConfiguration(private val project: Project) {
+     }
+ 
+     private fun getExpoModuleExtension(): ExpoModuleExtension {
+-        return project.extensions.getByName("expoModule") as ExpoModuleExtension
++        return project.extensions.getByName("expoModule") as ExpoModuleExtension
+     }
+ } 

@@ -1,0 +1,15 @@
+{
+  "ignore_dirs": [
+    "node_modules",
+    ".git",
+    "System Volume Information",
+    "Windows",
+    "Program Files",
+    "Program Files (x86)",
+    "AppData"
+  ],
+  "ignore_files": [
+    "DumpStack.log.tmp",
+    "DumpStack.log"
+  ]
+} 
