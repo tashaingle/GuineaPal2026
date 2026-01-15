@@ -3,15 +3,15 @@ import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import React from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, type ViewStyle } from 'react-native';
 
 type ActionButtonProps = {
   onPress: () => void;
   title: string;
-  style?: any;
+  style?: ViewStyle;
 };
 
-export function ActionButton({ onPress, title, style }: ActionButtonProps) {
+export function ActionButton({ onPress, title, style }: ActionButtonProps): React.JSX.Element {
   const colorScheme = useColorScheme();
 
   return (

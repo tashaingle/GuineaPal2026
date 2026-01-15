@@ -6,7 +6,7 @@ import AddEditPetScreen from '../screens/AddEditPetScreen';
 
 const Stack = createNativeStackNavigator();
 
-function TestScreen() {
+function TestScreen(): React.JSX.Element {
   return <AddEditPetScreen />;
 }
 

@@ -7,7 +7,7 @@ type BreedContextType = {
 
 const BreedContext = createContext<BreedContextType | undefined>(undefined);
 
-export const BreedProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const BreedProvider: React.FC<{ children: React.ReactNode }> = ({ children }): JSX.Element => {
   const [selectedBreed, setSelectedBreed] = useState('');
 
   return (
@@ -17,7 +17,7 @@ export const BreedProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 };
 
-export const useBreed = () => {
+export const useBreed = (): BreedContextType => {
   const context = useContext(BreedContext);
   if (context === undefined) {
     throw new Error('useBreed must be used within a BreedProvider');

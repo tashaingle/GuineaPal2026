@@ -1,16 +1,13 @@
 import BaseScreen from '@/components/BaseScreen';
 import { GuineaPig, Mood, MoodEntry, RootStackParamList } from '@/navigation/types';
-import colors from '@/theme/colors';
+import { getColor } from '@/theme/colors';
 import { loadPets, savePets } from '@/utils/storage';
 import { MaterialIcons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    Platform,
     ScrollView,
     StyleSheet,
     Text,
@@ -18,16 +15,15 @@ import {
     View
 } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
-import { Card } from 'react-native-paper';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'mood-tracker'>;
 
 const MOODS: Record<Mood, { icon: keyof typeof MaterialIcons.glyphMap; color: string; label: string }> = {
-  happy: { icon: 'sentiment-very-satisfied', color: '#4CAF50', label: 'Happy' },
-  content: { icon: 'sentiment-satisfied', color: '#8BC34A', label: 'Content' },
-  neutral: { icon: 'sentiment-neutral', color: '#FFC107', label: 'Neutral' },
-  anxious: { icon: 'sentiment-dissatisfied', color: '#FF9800', label: 'Anxious' },
-  sad: { icon: 'sentiment-very-dissatisfied', color: '#F44336', label: 'Sad' }
+  happy: { icon: 'sentiment-very-satisfied', color: getColor.success(), label: 'Happy' },
+  content: { icon: 'sentiment-satisfied', color: getColor.buttonGreen(), label: 'Content' },
+  neutral: { icon: 'sentiment-neutral', color: getColor.buttonOrange(), label: 'Neutral' },
+  anxious: { icon: 'sentiment-dissatisfied', color: getColor.warning(), label: 'Anxious' },
+  sad: { icon: 'sentiment-very-dissatisfied', color: getColor.error(), label: 'Sad' }
 };
 
 const ACTIVITIES: Array<{
@@ -43,24 +39,22 @@ const ACTIVITIES: Array<{
   { id: 'exploring', label: 'Exploring', icon: 'explore' }
 ];
 
-const MoodTrackerScreen = ({ route, navigation }: Props) => {
+const MoodTrackerScreen: React.FC<Props> = ({ route, navigation }) => {
   const { petId } = route.params;
   const [pet, setPet] = useState<GuineaPig | null>(null);
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
-  const [photo, setPhoto] = useState<string | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
   const [moodHistory, setMoodHistory] = useState<MoodEntry[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedEntry, setSelectedEntry] = useState<MoodEntry | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showAddForm, setShowAddForm] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<MoodEntry | null>(null);
 
   useEffect(() => {
     loadPetData();
   }, []);
 
-  const loadPetData = async () => {
+  const loadPetData = async (): Promise<void> => {
     try {
       const pets = await loadPets();
       const currentPet = pets.find(p => p.id === petId);
@@ -69,46 +63,35 @@ const MoodTrackerScreen = ({ route, navigation }: Props) => {
         navigation.goBack();
         return;
       }
-      setPet(currentPet);
+      setPet(currentPet as GuineaPig);
       if (currentPet.moodHistory) {
-        setMoodHistory(currentPet.moodHistory);
+        setMoodHistory((currentPet.moodHistory as MoodEntry[]) || []);
       }
-    } catch (error) {
-      console.error('Failed to load pet data:', error);
+    } catch {
       Alert.alert('Error', 'Failed to load pet data. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handlePhotoSelect = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Please grant camera roll permissions to add photos.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled && result.assets?.[0]?.uri) {
-      setPhoto(result.assets[0].uri);
+  const toggleActivity = (activityId: string): void => {
+    if (isEditing && editingEntry) {
+      setEditingEntry({
+        ...editingEntry,
+        activities: editingEntry.activities.includes(activityId)
+          ? editingEntry.activities.filter(id => id !== activityId)
+          : [...editingEntry.activities, activityId]
+      });
+    } else {
+      setSelectedActivities(prev =>
+        prev.includes(activityId)
+          ? prev.filter(id => id !== activityId)
+          : [...prev, activityId]
+      );
     }
   };
 
-  const toggleActivity = (activityId: string) => {
-    setSelectedActivities(prev =>
-      prev.includes(activityId)
-        ? prev.filter(id => id !== activityId)
-        : [...prev, activityId]
-    );
-  };
-
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (!selectedMood || !pet) {
       Alert.alert('Select Mood', 'Please select a mood before saving.');
       return;
@@ -119,8 +102,7 @@ const MoodTrackerScreen = ({ route, navigation }: Props) => {
         id: Date.now().toString(),
         date: new Date().toISOString(),
         mood: selectedMood,
-        activities: selectedActivities,
-        photo: photo || undefined
+        activities: selectedActivities
       };
 
       const pets = await loadPets();
@@ -132,18 +114,85 @@ const MoodTrackerScreen = ({ route, navigation }: Props) => {
           moodEntry
         ];
         await savePets(pets);
-        setMoodHistory(updatedPet.moodHistory);
+        setMoodHistory((updatedPet.moodHistory as MoodEntry[]) || []);
         Alert.alert('Success', 'Mood entry saved successfully!');
         navigation.goBack();
       }
-    } catch (error) {
-      console.error('Failed to save mood entry:', error);
+    } catch {
       Alert.alert('Error', 'Failed to save mood entry. Please try again.');
     }
   };
 
-  const getMarkedDates = () => {
-    const markedDates: { [key: string]: { marked: boolean; dotColor: string } } = {};
+  const handleEditEntry = (entry: MoodEntry): void => {
+    setEditingEntry(entry);
+    setIsEditing(true);
+    setSelectedEntry(null);
+  };
+
+  const handleSaveEdit = async (): Promise<void> => {
+    if (!editingEntry || !editingEntry.mood) {
+      Alert.alert('Error', 'Please select a mood before saving.');
+      return;
+    }
+
+    try {
+      const pets = await loadPets();
+      const updatedPet = pets.find(p => p.id === petId);
+      
+      if (updatedPet && updatedPet.moodHistory) {
+        const updatedHistory = updatedPet.moodHistory.map(entry =>
+          entry.id === editingEntry.id ? editingEntry : entry
+        );
+        updatedPet.moodHistory = updatedHistory;
+        await savePets(pets);
+        setMoodHistory(updatedHistory);
+        setEditingEntry(null);
+        setIsEditing(false);
+        Alert.alert('Success', 'Mood entry updated successfully!');
+      }
+    } catch {
+      Alert.alert('Error', 'Failed to update mood entry. Please try again.');
+    }
+  };
+
+  const handleDeleteEntry = (entryId: string): void => {
+    Alert.alert(
+      'Delete Entry',
+      'Are you sure you want to delete this mood entry?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const pets = await loadPets();
+              const updatedPet = pets.find(p => p.id === petId);
+              
+              if (updatedPet && updatedPet.moodHistory) {
+                const updatedHistory = updatedPet.moodHistory.filter(entry => entry.id !== entryId);
+                updatedPet.moodHistory = updatedHistory;
+                await savePets(pets);
+                setMoodHistory(updatedHistory);
+                setSelectedEntry(null);
+                Alert.alert('Success', 'Mood entry deleted successfully!');
+              }
+            } catch {
+              Alert.alert('Error', 'Failed to delete mood entry. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleCancelEdit = (): void => {
+    setEditingEntry(null);
+    setIsEditing(false);
+  };
+
+  const getMarkedDates = (): Record<string, { marked: boolean; dotColor: string }> => {
+    const markedDates: Record<string, { marked: boolean; dotColor: string }> = {};
     moodHistory.forEach(entry => {
       const date = new Date(entry.date).toISOString().split('T')[0];
       const mood = MOODS[entry.mood as keyof typeof MOODS];
@@ -157,47 +206,130 @@ const MoodTrackerScreen = ({ route, navigation }: Props) => {
     return markedDates;
   };
 
-  const handleDayPress = (day: DateData) => {
+  const handleDayPress = (day: DateData): void => {
     const entry = moodHistory.find(e => 
       new Date(e.date).toISOString().split('T')[0] === day.dateString
     );
     if (entry) {
       setSelectedEntry(entry);
-      setSelectedDate(day.dateString);
+      setIsEditing(false);
+      setEditingEntry(null);
     }
   };
 
-  const renderEntryDetails = () => {
-    if (!selectedEntry) return null;
+  const renderEntryDetails = (): JSX.Element | null => {
+    if (!selectedEntry && !editingEntry) return null;
 
-    const mood = MOODS[selectedEntry.mood as keyof typeof MOODS];
-    const entryDate = new Date(selectedEntry.date).toLocaleDateString();
-    const entryActivities = ACTIVITIES.filter(a => selectedEntry.activities.includes(a.id));
+    const entry = editingEntry || selectedEntry;
+    if (!entry) return null;
+
+    const mood = MOODS[entry.mood as keyof typeof MOODS];
+    const entryDate = new Date(entry.date).toLocaleDateString();
+    const entryActivities = ACTIVITIES.filter(a => entry.activities.includes(a.id));
 
     return (
       <View style={styles.entryDetails}>
-        <Text style={styles.entryDate}>{entryDate}</Text>
-        <View style={styles.entryMood}>
-          <MaterialIcons name={mood.icon} size={32} color={mood.color} />
-          <Text style={[styles.entryMoodText, { color: mood.color }]}>{mood.label}</Text>
+        <View style={styles.entryHeader}>
+          <Text style={styles.entryDate}>{entryDate}</Text>
+          {!isEditing && (
+            <View style={styles.entryActions}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleEditEntry(entry)}
+              >
+                <MaterialIcons name="edit" size={20} color={getColor.primary()} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleDeleteEntry(entry.id)}
+              >
+                <MaterialIcons name="delete" size={20} color={getColor.error()} />
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
-        {entryActivities.length > 0 && (
-          <View style={styles.entryActivities}>
-            <Text style={styles.entryActivitiesTitle}>Activities:</Text>
-            {entryActivities.map(activity => (
-              <View key={activity.id} style={styles.entryActivity}>
-                <MaterialIcons name={activity.icon} size={20} color="#5D4037" />
-                <Text style={styles.entryActivityText}>{activity.label}</Text>
-              </View>
-            ))}
+
+        {isEditing ? (
+          <View>
+            <Text style={styles.sectionTitle}>Edit Mood</Text>
+            <View style={styles.moodGrid}>
+              {Object.entries(MOODS).map(([key, moodOption]) => (
+                <TouchableOpacity
+                  key={key}
+                  style={[
+                    styles.moodOption,
+                    editingEntry?.mood === key && styles.selectedMood
+                  ]}
+                  onPress={() => editingEntry && setEditingEntry({ ...editingEntry, mood: key as Mood })}
+                >
+                  <MaterialIcons 
+                    name={moodOption.icon} 
+                    size={32} 
+                    color={editingEntry?.mood === key ? getColor.white() : moodOption.color} 
+                  />
+                  <Text style={[
+                    styles.moodOptionText,
+                    editingEntry?.mood === key && styles.selectedMoodText
+                  ]}>
+                    {moodOption.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.sectionTitle}>Edit Activities</Text>
+            <View style={styles.activitiesGrid}>
+              {ACTIVITIES.map(activity => (
+                <TouchableOpacity
+                  key={activity.id}
+                  style={[
+                    styles.activityOption,
+                    editingEntry?.activities.includes(activity.id) && styles.selectedActivity
+                  ]}
+                  onPress={() => toggleActivity(activity.id)}
+                >
+                  <MaterialIcons 
+                    name={activity.icon} 
+                    size={24} 
+                    color={editingEntry?.activities.includes(activity.id) ? getColor.white() : getColor.primary()} 
+                  />
+                  <Text style={[
+                    styles.activityOptionText,
+                    editingEntry?.activities.includes(activity.id) && styles.selectedActivityText
+                  ]}>
+                    {activity.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.editButtons}>
+              <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveEditButton} onPress={handleSaveEdit}>
+                <Text style={styles.saveEditButtonText}>Save Changes</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        )}
-        {selectedEntry.photo && (
-          <Image
-            source={{ uri: selectedEntry.photo }}
-            style={styles.entryPhoto}
-            contentFit="cover"
-          />
+        ) : (
+          <View>
+            <View style={styles.entryMood}>
+              <MaterialIcons name={mood.icon} size={32} color={mood.color} />
+              <Text style={[styles.entryMoodText, { color: mood.color }]}>{mood.label}</Text>
+            </View>
+            {entryActivities.length > 0 && (
+              <View style={styles.entryActivities}>
+                <Text style={styles.entryActivitiesTitle}>Activities:</Text>
+                {entryActivities.map(activity => (
+                  <View key={activity.id} style={styles.entryActivity}>
+                    <MaterialIcons name={activity.icon} size={20} color={getColor.primary()} />
+                    <Text style={styles.entryActivityText}>{activity.label}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
         )}
       </View>
     );
@@ -206,139 +338,107 @@ const MoodTrackerScreen = ({ route, navigation }: Props) => {
   if (isLoading || !pet) {
     return (
       <BaseScreen title="Loading...">
-        <View style={[styles.container, styles.loadingContainer]}>
-          <ActivityIndicator size="large" color={colors.primary.DEFAULT} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={getColor.primary()} />
         </View>
       </BaseScreen>
     );
   }
 
   return (
-    <BaseScreen
-      title={pet ? `${pet.name}'s Mood Tracker` : 'Mood Tracker'}
-      rightIcon="check"
-      onRightPress={handleSave}
-    >
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.banner}>
-          <Text style={styles.bannerTitle}>Mood Tracker</Text>
-          <Text style={styles.bannerSubtitle}>Track your pet's daily moods and activities</Text>
+    <BaseScreen title={`${pet.name}'s Mood Tracker`}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.title}>Track {pet.name}'s Mood</Text>
+          <Text style={styles.subtitle}>Select today's mood and activities</Text>
         </View>
 
-        <View style={styles.calendarContainer}>
-          <Calendar
-            markedDates={getMarkedDates()}
-            onDayPress={handleDayPress}
-            theme={{
-              selectedDayBackgroundColor: '#5D4037',
-              todayTextColor: '#5D4037',
-              dotColor: '#5D4037',
-              arrowColor: '#5D4037',
-              monthTextColor: '#5D4037',
-              textMonthFontSize: 16,
-              textMonthFontWeight: 'bold',
-            }}
-          />
-        </View>
-
-        {selectedEntry ? (
-          <View style={styles.entryDetails}>
-            {renderEntryDetails()}
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedEntry(null);
-                setSelectedDate(null);
-                setShowAddForm(true);
-              }}
-              style={styles.addButton}
-            >
-              <Text style={styles.buttonText}>Add New Entry</Text>
-            </TouchableOpacity>
+        <View style={styles.moodSection}>
+          <Text style={styles.sectionTitle}>How is {pet.name} feeling today?</Text>
+          <View style={styles.moodGrid}>
+            {Object.entries(MOODS).map(([key, mood]) => (
+              <TouchableOpacity
+                key={key}
+                style={[
+                  styles.moodOption,
+                  selectedMood === key && styles.selectedMood
+                ]}
+                onPress={() => setSelectedMood(key as Mood)}
+              >
+                <MaterialIcons 
+                  name={mood.icon} 
+                  size={32} 
+                  color={selectedMood === key ? getColor.white() : mood.color} 
+                />
+                <Text style={[
+                  styles.moodOptionText,
+                  selectedMood === key && styles.selectedMoodText
+                ]}>
+                  {mood.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        ) : showAddForm ? (
-          <>
-            <Card style={styles.card}>
-              <Card.Title title="How is your guinea pig feeling?" />
-              <Card.Content>
-                <View style={styles.moodSelector}>
-                  {Object.entries(MOODS).map(([mood, { icon, color, label }]) => (
-                    <TouchableOpacity
-                      key={mood}
-                      style={[
-                        styles.moodOption,
-                        selectedMood === mood && styles.selectedMoodOption,
-                        { borderColor: color }
-                      ]}
-                      onPress={() => setSelectedMood(mood as Mood)}
-                    >
-                      <MaterialIcons
-                        name={icon}
-                        size={32}
-                        color={selectedMood === mood ? color : '#757575'}
-                      />
-                      <Text style={styles.moodLabel}>{label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </Card.Content>
-            </Card>
+        </View>
 
-            <Card style={styles.card}>
-              <Card.Title title="What activities?" />
-              <Card.Content>
-                <View style={styles.activitiesGrid}>
-                  {ACTIVITIES.map(activity => (
-                    <TouchableOpacity
-                      key={activity.id}
-                      style={[
-                        styles.activityOption,
-                        selectedActivities.includes(activity.id) && styles.selectedActivity
-                      ]}
-                      onPress={() => toggleActivity(activity.id)}
-                    >
-                      <MaterialIcons
-                        name={activity.icon}
-                        size={24}
-                        color={selectedActivities.includes(activity.id) ? '#5D4037' : '#757575'}
-                      />
-                      <Text style={styles.activityLabel}>{activity.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </Card.Content>
-            </Card>
+        <View style={styles.activitiesSection}>
+          <Text style={styles.sectionTitle}>What activities did {pet.name} do?</Text>
+          <View style={styles.activitiesGrid}>
+            {ACTIVITIES.map(activity => (
+              <TouchableOpacity
+                key={activity.id}
+                style={[
+                  styles.activityOption,
+                  selectedActivities.includes(activity.id) && styles.selectedActivity
+                ]}
+                onPress={() => toggleActivity(activity.id)}
+              >
+                <MaterialIcons 
+                  name={activity.icon} 
+                  size={24} 
+                  color={selectedActivities.includes(activity.id) ? getColor.white() : getColor.primary()} 
+                />
+                <Text style={[
+                  styles.activityOptionText,
+                  selectedActivities.includes(activity.id) && styles.selectedActivityText
+                ]}>
+                  {activity.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
 
-            <Card style={styles.card}>
-              <Card.Title title="Add a photo (optional)" />
-              <Card.Content>
-                <TouchableOpacity
-                  style={styles.photoContainer}
-                  onPress={handlePhotoSelect}
-                >
-                  {photo ? (
-                    <Image
-                      source={{ uri: photo }}
-                      style={styles.photo}
-                      contentFit="cover"
-                    />
-                  ) : (
-                    <View style={styles.photoPlaceholder}>
-                      <MaterialIcons name="add-a-photo" size={32} color="#BDBDBD" />
-                      <Text style={styles.photoPlaceholderText}>Tap to add photo</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </Card.Content>
-            </Card>
-          </>
-        ) : (
-          <TouchableOpacity
-            onPress={() => setShowAddForm(true)}
-            style={styles.addButton}
-          >
-            <Text style={styles.buttonText}>Add New Entry</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Text style={styles.saveButtonText}>Save Mood Entry</Text>
+        </TouchableOpacity>
+
+        <View style={styles.historySection}>
+          <Text style={styles.sectionTitle}>Mood History</Text>
+          <View style={styles.calendarContainer}>
+            <Calendar
+              onDayPress={handleDayPress}
+              markedDates={getMarkedDates()}
+              theme={{
+                backgroundColor: getColor.white(),
+                calendarBackground: getColor.white(),
+                textSectionTitleColor: getColor.text(),
+                selectedDayBackgroundColor: getColor.primary(),
+                selectedDayTextColor: getColor.white(),
+                todayTextColor: getColor.primary(),
+                dayTextColor: getColor.text(),
+                textDisabledColor: getColor.textSecondary(),
+                dotColor: getColor.primary(),
+                selectedDotColor: getColor.white(),
+                arrowColor: getColor.primary(),
+                monthTextColor: getColor.text(),
+                textMonthFontWeight: 'bold',
+                textDayHeaderFontSize: 13
+              }}
+            />
+          </View>
+          {renderEntryDetails()}
+        </View>
       </ScrollView>
     </BaseScreen>
   );
@@ -347,235 +447,240 @@ const MoodTrackerScreen = ({ route, navigation }: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.DEFAULT
+    backgroundColor: getColor.backgroundLight(),
   },
   loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
-    alignItems: 'center'
-  },
-  contentContainer: {
-    padding: 16,
-    gap: 16
-  },
-  historyButton: {
-    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background.card,
-    padding: 12,
-    borderRadius: 8,
+  },
+  headerContainer: {
+    padding: 16,
+    backgroundColor: getColor.white(),
+    margin: 12,
+    borderRadius: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: getColor.shadow(),
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  historyButtonText: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: '#5D4037',
-    fontWeight: '500'
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: colors.background.DEFAULT
-  },
-  modalContent: {
-    flex: 1,
-    padding: 16
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 16 : 0,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(93, 64, 55, 0.1)',
-    backgroundColor: colors.background.DEFAULT
-  },
-  modalTitleContainer: {
-    flex: 1
-  },
-  modalTitle: {
+  title: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#5D4037'
+    color: getColor.text(),
+    marginBottom: 8,
   },
-  modalSubtitle: {
+  subtitle: {
     fontSize: 14,
-    color: '#795548',
-    marginTop: 2
+    color: getColor.textSecondary(),
   },
-  closeButton: {
-    margin: 0,
-    backgroundColor: 'rgba(93, 64, 55, 0.1)',
-    borderRadius: 20
-  },
-  entryDetails: {
-    backgroundColor: 'white',
-    borderRadius: 8,
+  moodSection: {
+    backgroundColor: getColor.white(),
+    margin: 12,
     padding: 16,
-    marginTop: 16,
+    borderRadius: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: getColor.shadow(),
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  entryDate: {
+  sectionTitle: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#5D4037',
-    marginBottom: 8
-  },
-  entryMood: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12
-  },
-  entryMoodText: {
-    fontSize: 18,
     fontWeight: '600',
-    marginLeft: 8
+    color: getColor.text(),
+    marginBottom: 16,
   },
-  entryActivities: {
-    marginTop: 8
-  },
-  entryActivitiesTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#5D4037',
-    marginBottom: 8
-  },
-  entryActivity: {
+  moodGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4
-  },
-  entryActivityText: {
-    marginLeft: 8,
-    color: '#5D4037'
-  },
-  entryPhoto: {
-    width: '100%',
-    height: 200,
-    borderRadius: 8,
-    marginTop: 12
-  },
-  card: {
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  moodSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     flexWrap: 'wrap',
-    gap: 8
+    justifyContent: 'space-between',
+    gap: 12,
   },
   moodOption: {
+    backgroundColor: getColor.white(),
+    borderWidth: 1,
+    borderColor: getColor.border(),
+    borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#E0E0E0',
-    minWidth: '18%'
+    minWidth: 80,
+    elevation: 1,
+    shadowColor: getColor.shadow(),
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
-  selectedMoodOption: {
-    backgroundColor: '#FFF8E1'
+  selectedMood: {
+    backgroundColor: getColor.primary(),
+    borderColor: getColor.primary(),
   },
-  moodLabel: {
-    marginTop: 4,
+  moodOptionText: {
     fontSize: 12,
-    color: '#757575'
+    color: getColor.text(),
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  selectedMoodText: {
+    color: getColor.white(),
+  },
+  activitiesSection: {
+    backgroundColor: getColor.white(),
+    margin: 12,
+    padding: 16,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: getColor.shadow(),
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   activitiesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8
+    gap: 12,
   },
   activityOption: {
-    alignItems: 'center',
+    backgroundColor: getColor.white(),
+    borderWidth: 1,
+    borderColor: getColor.border(),
+    borderRadius: 12,
     padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#F5F5F5',
-    minWidth: '30%'
+    alignItems: 'center',
+    minWidth: 80,
+    elevation: 1,
+    shadowColor: getColor.shadow(),
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   selectedActivity: {
-    backgroundColor: '#FFF8E1'
+    backgroundColor: getColor.primary(),
+    borderColor: getColor.primary(),
   },
-  activityLabel: {
-    marginTop: 4,
+  activityOptionText: {
     fontSize: 12,
-    color: '#757575',
-    textAlign: 'center'
+    color: getColor.text(),
+    marginTop: 4,
+    textAlign: 'center',
   },
-  photoContainer: {
-    width: '100%',
-    height: 200,
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: '#F5F5F5'
+  selectedActivityText: {
+    color: getColor.white(),
   },
-  photo: {
-    width: '100%',
-    height: '100%'
-  },
-  photoPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  photoPlaceholderText: {
-    marginTop: 8,
-    fontSize: 14,
-    color: '#BDBDBD'
-  },
-  banner: {
-    backgroundColor: 'white',
+  saveButton: {
+    backgroundColor: getColor.primary(),
+    margin: 12,
     padding: 16,
-    marginBottom: 16,
-    borderRadius: 8,
+    borderRadius: 12,
+    alignItems: 'center',
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: getColor.shadow(),
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  bannerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#5D4037',
-    marginBottom: 4,
-  },
-  bannerSubtitle: {
+  saveButtonText: {
+    color: getColor.white(),
     fontSize: 16,
-    color: '#795548',
+    fontWeight: '600',
+  },
+  historySection: {
+    backgroundColor: getColor.white(),
+    margin: 12,
+    padding: 16,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: getColor.shadow(),
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   calendarContainer: {
-    backgroundColor: 'white',
-    borderRadius: 8,
     marginBottom: 16,
-    padding: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
-  addButton: {
+  entryDetails: {
+    backgroundColor: getColor.backgroundLight(),
+    padding: 16,
+    borderRadius: 12,
     marginTop: 16,
-    backgroundColor: '#5D4037',
+  },
+  entryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  entryActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: getColor.white(),
+  },
+  entryDate: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: getColor.text(),
+  },
+  entryMood: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  entryMoodText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: 12,
+  },
+  entryActivities: {
+    marginBottom: 12,
+  },
+  entryActivitiesTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: getColor.text(),
+    marginBottom: 8,
+  },
+  entryActivity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  entryActivityText: {
+    fontSize: 14,
+    color: getColor.text(),
+    marginLeft: 8,
+  },
+  editButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: getColor.background(),
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
+  cancelButtonText: {
+    color: getColor.text(),
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  saveEditButton: {
+    flex: 1,
+    backgroundColor: getColor.primary(),
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  saveEditButtonText: {
+    color: getColor.white(),
+    fontSize: 14,
     fontWeight: '600',
   },
 });

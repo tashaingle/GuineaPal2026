@@ -2,7 +2,7 @@ import FloorTimeLogsScreen from '@/screens/FloorTimeLogsScreen';
 import { Stack } from 'expo-router/stack';
 import React from 'react';
 
-export default function FloorTimeLogsRoute() {
+export default function FloorTimeLogsRoute(): JSX.Element {
     return (
         <>
             <Stack.Screen

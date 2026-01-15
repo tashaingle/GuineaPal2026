@@ -1,4 +1,5 @@
 import * as SplashScreen from 'expo-splash-screen';
+import logger from './logger';
 
 // Configure splash screen
 SplashScreen.preventAutoHideAsync()
@@ -7,14 +8,15 @@ SplashScreen.preventAutoHideAsync()
   });
 
 // Function to hide the splash screen
-export const hideSplashScreen = async () => {
+export const hideSplashScreen = async (): Promise<void> => {
   try {
     // Ensure the background color is set
     if (typeof document !== 'undefined') {
       document.body.style.backgroundColor = '#FFF8E1';
     }
     await SplashScreen.hideAsync();
-  } catch (e) {
-    console.warn('Error hiding splash screen:', e);
+  } catch (error) {
+    logger.error('Failed to hide splash screen:', error);
+    throw new Error('Failed to hide splash screen');
   }
 }; 

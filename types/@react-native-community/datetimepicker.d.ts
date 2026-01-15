@@ -1,5 +1,5 @@
 declare module '@react-native-community/datetimepicker' {
-  import { ComponentType } from 'react';
+  import React from 'react';
     import { ViewStyle } from 'react-native';
 
   export interface DateTimePickerProps {
@@ -12,5 +12,6 @@ declare module '@react-native-community/datetimepicker' {
     style?: ViewStyle;
   }
 
-  export const DateTimePicker: ComponentType<DateTimePickerProps>;
+  const DateTimePicker: React.FC<DateTimePickerProps>;
+  export default DateTimePicker;
 } 

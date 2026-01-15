@@ -3,7 +3,7 @@ import { Animated, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import IconSymbol from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -17,12 +17,12 @@ export function Collapsible({
   title,
   children,
   initiallyExpanded = false,
-}: CollapsibleProps) {
+}: CollapsibleProps): React.JSX.Element {
   const [expanded, setExpanded] = useState(initiallyExpanded);
   const [animation] = useState(new Animated.Value(initiallyExpanded ? 1 : 0));
   const theme = useColorScheme();
 
-  const toggleExpand = () => {
+  const toggleExpand = (): void => {
     const toValue = expanded ? 0 : 1;
     Animated.timing(animation, {
       toValue,
@@ -41,8 +41,9 @@ export function Collapsible({
       >
         <ThemedText style={styles.title}>{title}</ThemedText>
         <IconSymbol
-          name="chevron-forward"
-          color={theme === 'light' ? Colors.light.icon : Colors.dark.icon}
+          name="chevron-right"
+          size={24}
+          color={Colors[theme ?? 'light'].text}
           style={[
             styles.icon,
             {

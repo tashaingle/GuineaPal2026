@@ -1,4 +1,4 @@
-import colors from '@/theme/colors';
+import colors, { getColor } from '@/theme/colors';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -17,7 +17,7 @@ import {
 import { TextInput } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const AddVetScreen = () => {
+const AddVetScreen: React.FC = (): JSX.Element => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
@@ -26,7 +26,7 @@ const AddVetScreen = () => {
   const [address, setAddress] = useState('');
   const [emergency, setEmergency] = useState(false);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (!name.trim() || !clinic.trim() || !phone.trim() || !address.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -59,23 +59,13 @@ const AddVetScreen = () => {
       style={[styles.container, { paddingTop: insets.top }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={[styles.header, { 
-        marginTop: 8,
-        backgroundColor: colors.background.card,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        marginHorizontal: 16,
-        borderRadius: 12,
-      }]}>
+      <View style={[styles.header, styles.headerContainer]}>
         <View style={styles.headerRow}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <MaterialIcons name="arrow-back" size={24} color={colors.buttons.brown} />
+            <MaterialIcons name="arrow-back" size={24} color={getColor.buttonBrown()} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Add Veterinarian</Text>
         </View>
@@ -119,8 +109,8 @@ const AddVetScreen = () => {
             <Switch
               value={emergency}
               onValueChange={setEmergency}
-              trackColor={{ false: '#767577', true: colors.primary.DEFAULT }}
-              thumbColor={emergency ? colors.primary.DEFAULT : '#f4f3f4'}
+              trackColor={{ false: colors.grey, true: getColor.primary() }}
+              thumbColor={emergency ? getColor.primary() : getColor.backgroundLight()}
             />
           </View>
         </View>
@@ -141,7 +131,7 @@ const AddVetScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.DEFAULT,
+    backgroundColor: getColor.backgroundLight(),
   },
   header: {
     flexDirection: 'row',
@@ -160,7 +150,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: colors.text.primary,
+    color: getColor.text(),
   },
   scrollView: {
     flex: 1,
@@ -170,7 +160,9 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 16,
-    backgroundColor: colors.background.DEFAULT,
+    backgroundColor: getColor.backgroundLight(),
+    color: getColor.text(),
+    fontSize: 16,
   },
   switchContainer: {
     flexDirection: 'row',
@@ -180,24 +172,35 @@ const styles = StyleSheet.create({
   },
   switchLabel: {
     fontSize: 16,
-    color: colors.text.primary,
+    color: getColor.text(),
   },
   footer: {
     padding: 16,
-    backgroundColor: colors.background.card,
+    backgroundColor: getColor.backgroundLight(),
     borderTopWidth: 1,
-    borderTopColor: colors.border.DEFAULT,
+    borderTopColor: getColor.border(),
   },
   saveButton: {
-    backgroundColor: colors.primary.DEFAULT,
+    backgroundColor: getColor.primary(),
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
   },
   saveButtonText: {
-    color: colors.background.DEFAULT,
+    color: getColor.background(),
     fontSize: 16,
     fontWeight: '600',
+  },
+  headerContainer: {
+    marginTop: 8,
+    backgroundColor: getColor.backgroundLight(),
+    elevation: 2,
+    shadowColor: getColor.shadow(),
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    marginHorizontal: 16,
+    borderRadius: 12,
   },
 });
 

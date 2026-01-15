@@ -1,126 +1,137 @@
-import { BondingSession, GuineaPig } from '@/navigation/types';
-import colors from '@/theme/colors';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     Alert,
-    KeyboardAvoidingView,
-    Platform,
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
-import { Calendar } from 'react-native-calendars';
+import { Calendar, DateData } from 'react-native-calendars';
+import { TextInput } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AppHeader from '../components/AppHeader';
+import { usePets } from '../hooks/usePets';
+import { getColor } from '../theme/colors';
+import { showInterstitialAd } from '../utils/ads';
+import { logger } from '../utils/logger';
+import { getBondingSessions, getPets } from '../utils/storage';
 
-type Location = 'floor' | 'cage' | 'playpen' | 'outside';
+type Location = 'playpen' | 'garden' | 'room';
 
-const LOCATIONS: Location[] = ['floor', 'cage', 'playpen', 'outside'];
+interface BondingSession {
+    id: string;
+    date: string;
+    duration: number;
+    location: Location;
+    notes?: string;
+    pets: string[];
+    behaviors: string[];
+}
+
+const LOCATIONS: Location[] = ['playpen', 'garden', 'room'];
 const LOCATION_EMOJIS: Record<Location, string> = {
-    floor: '🏠',
-    cage: '🏡',
     playpen: '🎪',
-    outside: '🌳'
+    garden: '🌳',
+    room: '🏠'
 };
 
 const LOCATION_LABELS: Record<Location, string> = {
-    floor: 'Floor Time',
-    cage: 'Cage',
     playpen: 'Playpen',
-    outside: 'Outside'
+    garden: 'Garden',
+    room: 'Room'
 };
 
-const BondingTimerScreen = () => {
+const BondingTimerScreen: React.FC = (): JSX.Element => {
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const [selectedPets, setSelectedPets] = useState<string[]>([]);
-    const [timer, setTimer] = useState(0);
+    const { pets } = usePets();
     const [isRunning, setIsRunning] = useState(false);
-    const [timerInterval, setTimerInterval] = useState<ReturnType<typeof setInterval> | null>(null);
-    const [pets, setPets] = useState<GuineaPig[]>([]);
-    const [notes, setNotes] = useState('');
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const [selectedPets, setSelectedPets] = useState<string[]>([]);
+    const [notes, setNotes] = useState<string>('');
     const [location, setLocation] = useState<Location>('playpen');
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const [sessions, setSessions] = useState<BondingSession[]>([]);
-    const [showSessions, setShowSessions] = useState(false);
-    const [editingSession, setEditingSession] = useState<BondingSession | null>(null);
-    const [showNotes, setShowNotes] = useState(false);
+    const [startTime, setStartTime] = useState<number>(0);
+    const [calendarMarkedDates, setCalendarMarkedDates] = useState<{}>({});
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
+    const [sessionsByDate, setSessionsByDate] = useState<Record<string, BondingSession[]>>({});
+    const [sessionsForSelectedDate, setSessionsForSelectedDate] = useState<BondingSession[]>([]);
 
     useEffect(() => {
-        loadPets();
-        loadSessions();
+        const loadData = async (): Promise<void> => {
+            try {
+                await Promise.all([
+                    getPets(),
+                    getBondingSessions()
+                ]);
+                // Note: setPets is not available in this context, pets are loaded via usePets hook
+                loadCalendarData();
+            } catch (error) {
+                logger.error('Failed to load data:', error);
+            }
+        };
+        loadData();
     }, []);
 
-    const loadPets = async () => {
-        try {
-            const savedPets = await AsyncStorage.getItem('@guineapals_pets');
-            if (savedPets) {
-                const parsedPets = JSON.parse(savedPets) as GuineaPig[];
-                setPets(parsedPets);
+    useEffect(() => {
+        let interval: ReturnType<typeof setInterval>;
+        if (isRunning) {
+            interval = setInterval(() => {
+                const now = Date.now();
+                const elapsed = Math.floor((now - startTime) / 1000);
+                setElapsedTime(elapsed);
+            }, 1000);
+        }
+        return (): void => {
+            if (interval) {
+                clearInterval(interval);
             }
-        } catch (error) {
-            console.error('Failed to load pets:', error);
+        };
+    }, [isRunning, startTime]);
+
+    const startTimer = (): void => {
+        if (!isRunning) {
+            setIsRunning(true);
+            setStartTime(Date.now() - elapsedTime * 1000);
         }
     };
 
-    const loadSessions = async () => {
-        try {
-            const savedSessions = await AsyncStorage.getItem('bondingSessions');
-            if (savedSessions) {
-                setSessions(JSON.parse(savedSessions));
-            }
-        } catch (error) {
-            console.error('Failed to load sessions:', error);
+    const stopTimer = (): void => {
+        if (isRunning) {
+            setIsRunning(false);
+            setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
         }
     };
 
-    const startTimer = () => {
-        if (selectedPets.length < 2) {
-            Alert.alert('Error', 'Please select at least 2 pets to start bonding');
-            return;
-        }
-
-        setIsRunning(true);
-        const interval = setInterval(() => {
-            setTimer(prev => prev + 1);
-        }, 1000);
-        setTimerInterval(interval);
-    };
-
-    const stopTimer = () => {
-        if (timerInterval) {
-            clearInterval(timerInterval);
-            setTimerInterval(null);
-        }
+    const resetTimer = (): void => {
         setIsRunning(false);
+        setElapsedTime(0);
+        setStartTime(Date.now());
     };
 
-    const resetTimer = () => {
-        stopTimer();
-        setTimer(0);
-    };
-
-    const formatTime = (seconds: number) => {
+    const formatTime = (seconds: number): string => {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
-        const remainingSeconds = seconds % 60;
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        const secs = seconds % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const handlePetSelect = (petId: string) => {
-        if (selectedPets.includes(petId)) {
-            setSelectedPets(prev => prev.filter(id => id !== petId));
-        } else {
-            setSelectedPets(prev => [...prev, petId]);
-        }
+    const handlePetSelection = (petId: string): void => {
+        setSelectedPets(prev => 
+            prev.includes(petId) 
+                ? prev.filter(id => id !== petId)
+                : [...prev, petId]
+        );
     };
 
-    const handleSaveSession = async () => {
+    const handleLocationSelection = (newLocation: Location): void => {
+        setLocation(newLocation);
+    };
+
+    const handleSaveSession = async (): Promise<void> => {
         if (selectedPets.length < 2) {
             Alert.alert('Error', 'Please select at least 2 pets to save the session');
             return;
@@ -130,453 +141,249 @@ const BondingTimerScreen = () => {
             const session: BondingSession = {
                 id: Date.now().toString(),
                 date: new Date().toISOString(),
-                duration: timer,
+                duration: elapsedTime,
                 pets: selectedPets,
                 location: location,
-                behaviors: [],
                 notes: notes.trim(),
-                success: 'neutral'
+                behaviors: [],
             };
 
             const savedSessions = await AsyncStorage.getItem('bondingSessions');
             const sessions = savedSessions ? JSON.parse(savedSessions) : [];
             await AsyncStorage.setItem('bondingSessions', JSON.stringify([...sessions, session]));
 
+            // Show ad when saving a bonding session
+            try {
+                await showInterstitialAd();
+            } catch (adError) {
+                console.warn('Failed to show interstitial ad:', adError);
+                // Don't fail the session save if ad fails
+            }
+
             Alert.alert('Success', 'Bonding session saved successfully', [
                 {
                     text: 'View Logs',
-                    onPress: () => router.push('/(stack)/bonding-tracker')
+                    onPress: (): void => router.push('/(stack)/bonding-tracker')
                 },
                 {
                     text: 'New Session',
-                    onPress: () => {
+                    onPress: (): void => {
                         resetTimer();
                         setNotes('');
                     }
                 }
             ]);
         } catch (error) {
-            console.error('Failed to save session:', error);
+            logger.error('Failed to save session:', error);
             Alert.alert('Error', 'Failed to save the bonding session');
         }
     };
 
-    const getMarkedDates = () => {
-        const marked: { [key: string]: { marked: boolean; dotColor: string; selected?: boolean; selectedColor?: string } } = {};
-        sessions.forEach(session => {
-            const date = new Date(session.date).toISOString().split('T')[0];
-            marked[date] = {
-                marked: true,
-                dotColor: colors.primary.DEFAULT
-            };
+    const handleStart = (): void => {
+        if (selectedPets.length < 2) {
+            Alert.alert('Error', 'Please select at least 2 pets to start the session');
+            return;
+        }
+        startTimer();
+    };
+
+    const handleStop = (): void => {
+        stopTimer();
+    };
+
+    const handleReset = (): void => {
+        resetTimer();
+        setNotes('');
+        setSelectedPets([]);
+    };
+
+    const loadCalendarData = async (): Promise<void> => {
+        const savedSessions = await AsyncStorage.getItem('bondingSessions');
+        const sessions = savedSessions ? JSON.parse(savedSessions) : [];
+        const marked: Record<string, { marked: boolean; dotColor: string }> = {};
+        const byDate: Record<string, BondingSession[]> = {};
+        sessions.forEach((session: BondingSession) => {
+            const date = session.date.split('T')[0];
+            marked[date] = { marked: true, dotColor: '#8D5524' };
+            if (!byDate[date]) byDate[date] = [];
+            byDate[date].push(session);
         });
-        // Add the selected date
-        if (marked[selectedDate]) {
-            marked[selectedDate] = {
-                ...marked[selectedDate],
-                selected: true,
-                selectedColor: colors.primary.light
-            };
-        } else {
-            marked[selectedDate] = {
-                marked: false,
-                dotColor: colors.primary.DEFAULT,
-                selected: true,
-                selectedColor: colors.primary.light
-            };
-        }
-        return marked;
+        setCalendarMarkedDates(marked);
+        setSessionsByDate(byDate);
     };
 
-    const getSessionsForDate = (date: string) => {
-        return sessions.filter(session => 
-            new Date(session.date).toISOString().split('T')[0] === date
-        );
-    };
-
-    const formatDuration = (seconds: number) => {
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        if (hours > 0) {
-            return `${hours}h ${minutes}m`;
-        }
-        return `${minutes}m`;
-    };
-
-    const handleDeleteSession = async (sessionId: string) => {
-        Alert.alert(
-            'Delete Session',
-            'Are you sure you want to delete this session?',
-            [
-                {
-                    text: 'Cancel',
-                    style: 'cancel'
-                },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            const updatedSessions = sessions.filter(session => session.id !== sessionId);
-                            await AsyncStorage.setItem('bondingSessions', JSON.stringify(updatedSessions));
-                            setSessions(updatedSessions);
-                        } catch (error) {
-                            console.error('Failed to delete session:', error);
-                            Alert.alert('Error', 'Failed to delete session');
-                        }
-                    }
-                }
-            ]
-        );
-    };
-
-    const handleEditSession = async (session: BondingSession) => {
-        setEditingSession(session);
-        setNotes(session.notes || '');
-        setLocation(session.location);
-        setSelectedPets(session.pets);
-        setTimer(session.duration);
-        setShowNotes(true);
-    };
-
-    const handleUpdateSession = async () => {
-        if (!editingSession) return;
-
-        try {
-            const updatedSession: BondingSession = {
-                ...editingSession,
-                duration: timer,
-                location,
-                notes: notes.trim(),
-                pets: selectedPets
-            };
-
-            const updatedSessions = sessions.map(session => 
-                session.id === editingSession.id ? updatedSession : session
-            );
-            
-            await AsyncStorage.setItem('bondingSessions', JSON.stringify(updatedSessions));
-            setSessions(updatedSessions);
-            setEditingSession(null);
-            setNotes('');
-            setShowNotes(false);
-            setTimer(0);
-            setSelectedPets([]);
-        } catch (error) {
-            console.error('Failed to update session:', error);
-            Alert.alert('Error', 'Failed to update session');
-        }
-    };
-
-    const renderSessions = () => {
-        const dateSessions = getSessionsForDate(selectedDate);
-        if (dateSessions.length === 0) return null;
-
-        return (
-            <View style={styles.sessionsContainer}>
-                <Text style={styles.sessionsTitle}>Sessions for {new Date(selectedDate).toLocaleDateString()}</Text>
-                {dateSessions.map(session => (
-                    <View key={session.id} style={styles.sessionCard}>
-                        <View style={styles.sessionHeader}>
-                            <View style={styles.sessionInfo}>
-                                <Text style={styles.locationEmoji}>
-                                    {LOCATION_EMOJIS[session.location]}
-                                </Text>
-                                <Text style={styles.sessionDuration}>
-                                    {formatDuration(session.duration)}
-                                </Text>
-                            </View>
-                            <View style={styles.sessionActions}>
-                                <Text style={styles.sessionTime}>
-                                    {new Date(session.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </Text>
-                                <TouchableOpacity
-                                    style={styles.editButton}
-                                    onPress={() => handleEditSession(session)}
-                                >
-                                    <MaterialCommunityIcons name="pencil" size={20} color={colors.primary.DEFAULT} />
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={styles.deleteButton}
-                                    onPress={() => handleDeleteSession(session.id)}
-                                >
-                                    <MaterialCommunityIcons name="delete-outline" size={20} color={colors.status.error} />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                        {session.notes && (
-                            <Text style={styles.sessionNotes}>{session.notes}</Text>
-                        )}
-                        <View style={styles.sessionPets}>
-                            <Text style={styles.sessionPetsText}>
-                                {session.pets.map(petId => pets.find(p => p.id === petId)?.name).filter(Boolean).join(' & ')}
-                            </Text>
-                        </View>
-                    </View>
-                ))}
-            </View>
-        );
+    const handleDayPress = (day: DateData): void => {
+        setSelectedDate(day.dateString);
+        setSessionsForSelectedDate(sessionsByDate[day.dateString] || []);
     };
 
     return (
-        <KeyboardAvoidingView 
-            style={[styles.container, { paddingTop: insets.top }]}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-        >
-            <View style={styles.header}>
-                <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => router.back()}
-                >
-                    <MaterialCommunityIcons name="arrow-left" size={24} color={colors.primary.DEFAULT} />
-                </TouchableOpacity>
-                <Text style={styles.title}>Bonding Sessions</Text>
-                <TouchableOpacity
-                    style={styles.logButton}
-                    onPress={() => router.push('/(stack)/bonding-tracker')}
-                >
-                    <View style={styles.logButtonContent}>
-                        <MaterialCommunityIcons name="history" size={24} color={colors.primary.DEFAULT} />
-                        <Text style={styles.logButtonText}>View Logs</Text>
-                    </View>
-                </TouchableOpacity>
-            </View>
-
-            <ScrollView 
-                style={styles.content}
-                contentContainerStyle={styles.scrollContent}
-                keyboardShouldPersistTaps="handled"
-            >
-                <View style={styles.calendarContainer}>
-                    <Calendar
-                        current={selectedDate}
-                        onDayPress={(day) => {
-                            setSelectedDate(day.dateString);
-                            setShowSessions(true);
-                        }}
-                        markedDates={getMarkedDates()}
-                        theme={{
-                            backgroundColor: colors.background.card,
-                            calendarBackground: colors.background.card,
-                            textSectionTitleColor: colors.text.primary,
-                            selectedDayBackgroundColor: colors.primary.DEFAULT,
-                            selectedDayTextColor: colors.text.light,
-                            todayTextColor: colors.primary.DEFAULT,
-                            dayTextColor: colors.text.primary,
-                            textDisabledColor: colors.text.secondary,
-                            dotColor: colors.primary.DEFAULT,
-                            selectedDotColor: colors.text.light,
-                            arrowColor: colors.primary.DEFAULT,
-                            monthTextColor: colors.text.primary,
-                            textMonthFontWeight: 'bold',
-                            textDayHeaderFontSize: 16,
-                            textDayFontSize: 16,
-                            textMonthFontSize: 16
-                        }}
-                    />
-                </View>
-
-                {showSessions && renderSessions()}
-
-                {showNotes && (
-                    <View style={styles.notesContainer}>
-                        <Text style={styles.notesTitle}>Notes</Text>
-                        <TextInput
-                            style={styles.notesInput}
-                            value={notes}
-                            onChangeText={setNotes}
-                            placeholder="Add notes about the session..."
-                            placeholderTextColor={colors.text.secondary}
-                            multiline
-                            numberOfLines={4}
-                        />
-                        <TouchableOpacity
-                            style={styles.saveButton}
-                            onPress={editingSession ? handleUpdateSession : handleSaveSession}
-                        >
-                            <Text style={styles.saveButtonText}>
-                                {editingSession ? 'Update Session' : 'Save Session'}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
-
-                <View style={styles.timerContainer}>
-                    <Text style={styles.timer}>{formatTime(timer)}</Text>
-                    <View style={styles.timerControls}>
-                        {!isRunning ? (
-                            <TouchableOpacity 
-                                style={[styles.button, styles.startButton]} 
-                                onPress={startTimer}
-                            >
-                                <Text style={styles.buttonText}>Start</Text>
-                            </TouchableOpacity>
-                        ) : (
-                            <TouchableOpacity 
-                                style={[styles.button, styles.stopButton]} 
-                                onPress={stopTimer}
-                            >
-                                <Text style={styles.buttonText}>Stop</Text>
-                            </TouchableOpacity>
-                        )}
-                        <TouchableOpacity 
-                            style={[styles.button, styles.resetButton]} 
-                            onPress={resetTimer}
-                        >
-                            <Text style={styles.buttonText}>Reset</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                {!isRunning && timer > 0 && (
-                    <TouchableOpacity 
-                        style={[styles.bottomSaveButton, { bottom: insets.bottom + 16 }]} 
-                        onPress={handleSaveSession}
-                    >
-                        <Text style={styles.bottomSaveButtonText}>Save Session</Text>
-                    </TouchableOpacity>
-                )}
-
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Select Guinea Pigs</Text>
-                    <View style={styles.petList}>
-                        {pets.length === 0 ? (
-                            <View style={styles.emptyState}>
-                                <Text style={styles.emptyStateText}>No guinea pigs found</Text>
-                                <Text style={styles.emptyStateSubtext}>
-                                    Add guinea pigs from the "My Guinea Pigs" screen first
-                                </Text>
+        <View style={[styles.container, { paddingTop: insets.top }]}>
+            <AppHeader 
+                title="Bonding Timer"
+            />
+            <ScrollView style={styles.scrollView}>
+                <View style={styles.content}>
+                    <View style={styles.timerContainer}>
+                        <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
+                        <View style={styles.timerControls}>
+                            {!isRunning ? (
                                 <TouchableOpacity
-                                    style={styles.addPetButton}
-                                    onPress={() => router.push('/(stack)/my-guinea-pigs')}
+                                    style={[styles.timerButton, styles.startButton]}
+                                    onPress={handleStart}
                                 >
-                                    <Text style={styles.addPetButtonText}>Go to My Guinea Pigs</Text>
+                                    <Text style={styles.buttonText}>Start</Text>
                                 </TouchableOpacity>
+                            ) : (
+                                <TouchableOpacity
+                                    style={[styles.timerButton, styles.stopButton]}
+                                    onPress={handleStop}
+                                >
+                                    <Text style={styles.buttonText}>Stop</Text>
+                                </TouchableOpacity>
+                            )}
+                            <TouchableOpacity
+                                style={[styles.timerButton, styles.resetButton]}
+                                onPress={handleReset}
+                            >
+                                <Text style={styles.buttonText}>Reset</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    {/* View Logs Button */}
+                    <TouchableOpacity
+                        style={styles.viewLogsButton}
+                        onPress={() => router.push('/(stack)/bonding-tracker')}
+                    >
+                        <MaterialIcons name="list-alt" size={22} color={getColor.primary()} />
+                        <Text style={styles.viewLogsButtonText}>View Logs</Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.calendarContainer}>
+                        <Calendar
+                            markedDates={calendarMarkedDates}
+                            onDayPress={handleDayPress}
+                            style={styles.calendar}
+                        />
+                        {selectedDate && (
+                            <View style={styles.selectedDateContainer}>
+                                <Text style={styles.selectedDateTitle}>
+                                    Sessions on {selectedDate}:
+                                </Text>
+                                {sessionsForSelectedDate.length > 0 ? (
+                                    sessionsForSelectedDate.map(session => (
+                                        <View key={session.id} style={styles.sessionCard}>
+                                            <Text>Duration: {formatTime(session.duration)}</Text>
+                                            <Text>Location: {LOCATION_LABELS[session.location]}</Text>
+                                            {session.notes ? <Text>Notes: {session.notes}</Text> : null}
+                                        </View>
+                                    ))
+                                ) : (
+                                    <Text>No sessions for this day.</Text>
+                                )}
                             </View>
-                        ) :
-                            pets.map(pet => (
+                        )}
+                    </View>
+
+                    <View style={styles.petsContainer}>
+                        <Text style={styles.sectionTitle}>Select Pets</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            {pets.map(pet => (
                                 <TouchableOpacity
                                     key={pet.id}
                                     style={[
-                                        styles.petCard,
-                                        selectedPets.includes(pet.id) && styles.selectedPetCard,
+                                        styles.petButton,
+                                        selectedPets.includes(pet.id) && styles.selectedPetButton
                                     ]}
-                                    onPress={() => handlePetSelect(pet.id)}
-                                    activeOpacity={0.7}
+                                    onPress={() => handlePetSelection(pet.id)}
                                 >
-                                    <View style={styles.petCardContent}>
-                                        <Text style={[
-                                            styles.petName,
-                                            selectedPets.includes(pet.id) && styles.selectedPetName
-                                        ]}>
-                                            {pet.name}
-                                        </Text>
-                                        <MaterialCommunityIcons 
-                                            name={selectedPets.includes(pet.id) ? "check-circle" : "circle-outline"} 
-                                            size={24} 
-                                            color={selectedPets.includes(pet.id) ? colors.text.light : colors.text.primary} 
-                                        />
-                                    </View>
+                                    <Text style={[
+                                        styles.petButtonText,
+                                        selectedPets.includes(pet.id) && styles.selectedPetButtonText
+                                    ]}>
+                                        {pet.name}
+                                    </Text>
                                 </TouchableOpacity>
-                            ))
-                        }
+                            ))}
+                        </ScrollView>
                     </View>
-                </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Location</Text>
-                    <View style={styles.locationList}>
-                        {LOCATIONS.map((loc) => (
-                            <TouchableOpacity
-                                key={loc}
-                                style={[
-                                    styles.locationCard,
-                                    location === loc && styles.selectedLocationCard
-                                ]}
-                                onPress={() => setLocation(loc)}
-                            >
-                                <Text style={[
-                                    styles.locationText,
-                                    location === loc && styles.selectedLocationText
-                                ]}>
-                                    {LOCATION_EMOJIS[loc]} {LOCATION_LABELS[loc]}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
+                    <View style={styles.locationContainer}>
+                        <Text style={styles.sectionTitle}>Location</Text>
+                        <View style={styles.locationButtons}>
+                            {LOCATIONS.map(loc => (
+                                <TouchableOpacity
+                                    key={loc}
+                                    style={[
+                                        styles.locationButton,
+                                        location === loc && styles.selectedLocationButton
+                                    ]}
+                                    onPress={() => handleLocationSelection(loc)}
+                                >
+                                    <Text style={styles.locationEmoji}>{LOCATION_EMOJIS[loc]}</Text>
+                                    <Text style={[
+                                        styles.locationText,
+                                        location === loc && styles.selectedLocationText
+                                    ]}>
+                                        {LOCATION_LABELS[loc]}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
                     </View>
+
+                    <View style={styles.notesContainer}>
+                        <Text style={styles.sectionTitle}>Notes</Text>
+                        <TextInput
+                            style={styles.notesInput}
+                            multiline
+                            numberOfLines={4}
+                            value={notes}
+                            onChangeText={setNotes}
+                            placeholder="Add any notes about the session..."
+                            
+                        />
+                    </View>
+
+                    <TouchableOpacity
+                        style={styles.saveButton}
+                        onPress={handleSaveSession}
+                    >
+                        <Text style={styles.saveButtonText}>Save Session</Text>
+                    </TouchableOpacity>
                 </View>
             </ScrollView>
-        </KeyboardAvoidingView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.DEFAULT,
+        backgroundColor: getColor.backgroundLight(),
     },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border.DEFAULT,
-        backgroundColor: colors.background.card,
-    },
-    backButton: {
-        padding: 8,
-        marginLeft: -8,
-    },
-    title: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: colors.text.primary,
-    },
-    logButton: {
-        padding: 8,
-        marginRight: -8,
-    },
-    logButtonContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-    },
-    logButtonText: {
-        color: colors.primary.DEFAULT,
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    content: {
+    scrollView: {
         flex: 1,
     },
-    scrollContent: {
-        paddingBottom: 100,
+    content: {
+        padding: 16,
     },
     timerContainer: {
         alignItems: 'center',
-        padding: 24,
-        backgroundColor: colors.background.card,
-        margin: 16,
-        borderRadius: 12,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        marginBottom: 24,
     },
-    timer: {
+    timerText: {
         fontSize: 48,
         fontWeight: 'bold',
-        color: colors.text.primary,
+        color: getColor.text(),
         marginBottom: 16,
     },
     timerControls: {
         flexDirection: 'row',
         gap: 16,
     },
-    button: {
+    timerButton: {
         paddingHorizontal: 24,
         paddingVertical: 12,
         borderRadius: 8,
@@ -584,243 +391,137 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     startButton: {
-        backgroundColor: colors.status.success,
+        backgroundColor: getColor.primary(),
     },
     stopButton: {
-        backgroundColor: colors.status.error,
+        backgroundColor: getColor.error(),
     },
     resetButton: {
-        backgroundColor: colors.buttons.secondary,
+        backgroundColor: getColor.secondary(),
     },
     buttonText: {
-        color: colors.text.light,
+        color: getColor.background(),
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: 'bold',
     },
-    section: {
-        padding: 16,
+    petsContainer: {
+        marginBottom: 24,
     },
     sectionTitle: {
         fontSize: 18,
-        fontWeight: '600',
-        color: colors.text.primary,
-        marginBottom: 16,
+        fontWeight: 'bold',
+        color: getColor.text(),
+        marginBottom: 12,
     },
-    petList: {
+    petButton: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: getColor.cardBackground(),
+        marginRight: 8,
+    },
+    selectedPetButton: {
+        backgroundColor: getColor.primary(),
+    },
+    petButtonText: {
+        color: getColor.text(),
+        fontSize: 14,
+    },
+    selectedPetButtonText: {
+        color: getColor.background(),
+    },
+    locationContainer: {
+        marginBottom: 24,
+    },
+    locationButtons: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 8,
     },
-    petCard: {
-        backgroundColor: colors.background.card,
-        padding: 12,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: colors.border.DEFAULT,
-        width: '48%',
-        marginBottom: 8,
-    },
-    selectedPetCard: {
-        backgroundColor: colors.primary.DEFAULT,
-        borderColor: colors.primary.DEFAULT,
-    },
-    petCardContent: {
+    locationButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    petName: {
-        color: colors.text.primary,
-        fontSize: 16,
-        flex: 1,
-    },
-    selectedPetName: {
-        color: colors.text.light,
-    },
-    emptyState: {
-        width: '100%',
-        alignItems: 'center',
-        padding: 16,
-    },
-    emptyStateText: {
-        fontSize: 16,
-        color: colors.text.secondary,
-        marginBottom: 16,
-    },
-    emptyStateSubtext: {
-        fontSize: 14,
-        color: colors.text.secondary,
-        textAlign: 'center',
-        marginBottom: 16,
-    },
-    addPetButton: {
-        backgroundColor: colors.primary.DEFAULT,
-        paddingHorizontal: 24,
-        paddingVertical: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
         borderRadius: 8,
-    },
-    addPetButtonText: {
-        color: colors.text.light,
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    saveButton: {
-        position: 'absolute',
-        bottom: 24,
-        left: 16,
-        right: 16,
-        backgroundColor: colors.primary.DEFAULT,
-        padding: 16,
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    saveButtonDisabled: {
-        backgroundColor: '#CCCCCC',
-    },
-    saveButtonText: {
-        color: colors.text.light,
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    notesInput: {
-        backgroundColor: colors.background.card,
-        borderRadius: 8,
-        padding: 12,
-        color: colors.text.primary,
-        borderWidth: 1,
-        borderColor: colors.border.DEFAULT,
-        minHeight: 100,
-        textAlignVertical: 'top',
-        fontSize: 16,
-    },
-    locationList: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
+        backgroundColor: getColor.cardBackground(),
         gap: 8,
     },
-    locationCard: {
-        backgroundColor: colors.background.card,
-        padding: 12,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: colors.border.DEFAULT,
-        width: '48%',
-        marginBottom: 8,
-    },
-    selectedLocationCard: {
-        backgroundColor: colors.primary.DEFAULT,
-        borderColor: colors.primary.DEFAULT,
-    },
-    locationText: {
-        fontSize: 16,
-        color: colors.text.primary,
-        textAlign: 'center',
-    },
-    selectedLocationText: {
-        color: colors.text.light,
-        fontWeight: '600',
-    },
-    calendarContainer: {
-        backgroundColor: colors.background.card,
-        margin: 16,
-        borderRadius: 12,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    sessionsContainer: {
-        padding: 16,
-    },
-    sessionsTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: colors.text.primary,
-        marginBottom: 16,
-    },
-    sessionCard: {
-        backgroundColor: colors.background.card,
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 8,
-    },
-    sessionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    sessionInfo: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    sessionDuration: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: colors.text.primary,
-    },
-    sessionTime: {
-        fontSize: 14,
-        color: colors.text.secondary,
-    },
-    sessionNotes: {
-        fontSize: 14,
-        color: colors.text.secondary,
-        marginBottom: 8,
-    },
-    sessionPets: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-    },
-    sessionPetsText: {
-        fontSize: 14,
-        color: colors.text.secondary,
-    },
-    sessionActions: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    editButton: {
-        padding: 4,
-    },
-    deleteButton: {
-        padding: 4,
+    selectedLocationButton: {
+        backgroundColor: getColor.primary(),
     },
     locationEmoji: {
-        fontSize: 24,
+        fontSize: 20,
+    },
+    locationText: {
+        color: getColor.text(),
+        fontSize: 14,
+    },
+    selectedLocationText: {
+        color: getColor.background(),
     },
     notesContainer: {
-        padding: 16,
+        marginBottom: 24,
     },
-    notesTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: colors.text.primary,
-        marginBottom: 16,
+    notesInput: {
+        backgroundColor: getColor.cardBackground(),
+        borderRadius: 8,
+        padding: 12,
+        color: getColor.text(),
+        minHeight: 100,
+        textAlignVertical: 'top',
     },
-    bottomSaveButton: {
-        position: 'absolute',
-        left: 16,
-        right: 16,
-        backgroundColor: colors.primary.DEFAULT,
+    saveButton: {
+        backgroundColor: getColor.primary(),
         padding: 16,
         borderRadius: 8,
         alignItems: 'center',
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
     },
-    bottomSaveButtonText: {
-        color: colors.text.light,
+    saveButtonText: {
+        color: getColor.background(),
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: 'bold',
+    },
+    calendarContainer: {
+        marginBottom: 24,
+    },
+    calendar: {
+        borderRadius: 12,
+    },
+    selectedDateContainer: {
+        marginTop: 12,
+    },
+    selectedDateTitle: {
+        fontWeight: 'bold',
+        marginBottom: 4,
+        color: getColor.text(),
+    },
+    sessionCard: {
+        padding: 8,
+        backgroundColor: getColor.cardBackground(),
+        borderRadius: 8,
+        marginBottom: 6,
+    },
+    viewLogsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: getColor.cardBackground(),
+        borderRadius: 8,
+        paddingVertical: 10,
+        marginBottom: 16,
+        marginHorizontal: 0,
+        gap: 8,
+        borderWidth: 1,
+        borderColor: getColor.primary(),
+    },
+    viewLogsButtonText: {
+        color: getColor.primary(),
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
 
 export default BondingTimerScreen; 
+
+

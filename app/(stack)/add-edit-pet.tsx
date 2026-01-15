@@ -1,8 +1,16 @@
 import AddEditPetScreen from '@/screens/AddEditPetScreen';
-import { useLocalSearchParams } from 'expo-router';
+import { Stack } from 'expo-router/stack';
 import React from 'react';
 
-export default function AddEditPetRoute() {
-    const params = useLocalSearchParams();
-    return <AddEditPetScreen />;
+export default function AddEditPetRoute(): JSX.Element {
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          headerShown: false,
+        }}
+      />
+      <AddEditPetScreen />
+    </>
+  );
 } 

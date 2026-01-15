@@ -2,7 +2,7 @@ import BondingTimerScreen from '@/screens/BondingTimerScreen';
 import { Stack } from 'expo-router/stack';
 import React from 'react';
 
-export default function BondingTimerRoute() {
+export default function BondingTimerRoute(): JSX.Element {
   return (
     <>
       <Stack.Screen

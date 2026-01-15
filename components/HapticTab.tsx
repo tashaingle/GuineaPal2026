@@ -1,14 +1,15 @@
 import { PlatformPressable } from '@react-navigation/elements';
 import * as Haptics from 'expo-haptics';
+import { Link } from 'expo-router';
+import { ComponentProps } from 'react';
 import { GestureResponderEvent } from 'react-native';
 
-type HapticTabProps = {
+type HapticTabProps = Omit<ComponentProps<typeof Link>, 'href'> & {
+  href: string;
   onPressIn?: (event: GestureResponderEvent) => void;
-  children: React.ReactNode;
-  style?: any;
 };
 
-export function HapticTab(props: HapticTabProps) {
+export function HapticTab(props: HapticTabProps): React.JSX.Element {
   const { onPressIn, children, style } = props;
 
   return (

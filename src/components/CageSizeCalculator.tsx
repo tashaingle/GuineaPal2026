@@ -1,9 +1,10 @@
-import colors from '@/theme/colors';
+
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { Button } from 'react-native-paper';
+import { getColor } from '../theme/colors';
 
-const CageSizeCalculator = () => {
+const CageSizeCalculator = (): React.JSX.Element => {
     const [numPigs, setNumPigs] = useState('1');
     const [result, setResult] = useState<{
         minSize: string;
@@ -11,7 +12,7 @@ const CageSizeCalculator = () => {
         dimensions: string[];
     } | null>(null);
 
-    const calculateCageSize = () => {
+    const calculateCageSize = (): void => {
         const pigs = parseInt(numPigs);
         if (isNaN(pigs) || pigs < 1) {
             setResult(null);
@@ -58,7 +59,7 @@ const CageSizeCalculator = () => {
                     onPress={calculateCageSize}
                     style={styles.button}
                 >
-                    Calculate
+                    <Text style={styles.buttonText}>Calculate</Text>
                 </Button>
             </View>
 
@@ -73,8 +74,8 @@ const CageSizeCalculator = () => {
                             Recommended Size: {result.recommendedSize} square feet
                         </Text>
                         <Text style={styles.dimensionsTitle}>Common Dimensions:</Text>
-                        {result.dimensions.map((dim, index) => (
-                            <Text key={index} style={styles.dimensionsText}>
+                        {result.dimensions.map((dim) => (
+                            <Text key={`dimension-${dim.replace(/[^0-9x]/g, '')}`} style={styles.dimensionsText}>
                                 • {dim}
                             </Text>
                         ))}
@@ -87,7 +88,7 @@ const CageSizeCalculator = () => {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: colors.background.card,
+        backgroundColor: getColor.background(),
         borderRadius: 12,
         padding: 16,
         marginHorizontal: 16,
@@ -96,12 +97,12 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 20,
         fontWeight: '600',
-        color: colors.text.primary,
+        color: getColor.text(),
         marginBottom: 8,
     },
     description: {
         fontSize: 14,
-        color: colors.text.secondary,
+        color: getColor.textLight(),
         marginBottom: 16,
     },
     inputContainer: {
@@ -109,20 +110,23 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 16,
-        color: colors.text.primary,
+        color: getColor.text(),
         marginBottom: 8,
     },
     input: {
-        backgroundColor: colors.background.DEFAULT,
+        backgroundColor: getColor.background(),
         borderRadius: 8,
         padding: 12,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: colors.border.light,
+        borderColor: getColor.border(),
         fontSize: 16,
     },
     button: {
         marginTop: 8,
+    },
+    buttonText: {
+        color: getColor.text(),
     },
     resultContainer: {
         marginTop: 16,
@@ -130,31 +134,31 @@ const styles = StyleSheet.create({
     resultTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: colors.text.primary,
+        color: getColor.text(),
         marginBottom: 12,
     },
     resultBox: {
-        backgroundColor: colors.background.DEFAULT,
+        backgroundColor: getColor.background(),
         borderRadius: 8,
         padding: 16,
         borderWidth: 1,
-        borderColor: colors.border.light,
+        borderColor: getColor.border(),
     },
     resultText: {
         fontSize: 16,
-        color: colors.text.primary,
+        color: getColor.text(),
         marginBottom: 8,
     },
     dimensionsTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: colors.text.primary,
+        color: getColor.text(),
         marginTop: 12,
         marginBottom: 8,
     },
     dimensionsText: {
         fontSize: 14,
-        color: colors.text.secondary,
+        color: getColor.textLight(),
         marginBottom: 4,
     },
 });

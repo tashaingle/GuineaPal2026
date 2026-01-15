@@ -1,39 +1,40 @@
 import * as Font from 'expo-font';
 import { useEffect, useState } from 'react';
 
-export const useFonts = () => {
+export const useFonts = (): boolean => {
   const [fontsLoaded, setFontsLoaded] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadFonts() {
+    const loadFonts = async (): Promise<void> => {
       try {
-        console.log('Starting font loading...');
+        // Using system fonts instead of Poppins
         await Font.loadAsync({
-          'SpaceMono': require('../../assets/fonts/SpaceMono.ttf'),
+          'Poppins-Regular': require('../../assets/fonts/SpaceMono.ttf'),
+          'Poppins-Medium': require('../../assets/fonts/SpaceMono.ttf'),
+          'Poppins-SemiBold': require('../../assets/fonts/SpaceMono.ttf'),
+          'Poppins-Bold': require('../../assets/fonts/SpaceMono.ttf'),
         });
-        console.log('Fonts loaded successfully');
+
         if (isMounted) {
           setFontsLoaded(true);
         }
-      } catch (e) {
-        console.error('Error loading fonts:', e);
+      } catch (error) {
+        console.error('Error loading fonts:', error);
+        // Fallback to system fonts
         if (isMounted) {
-          setError(e instanceof Error ? e : new Error('Failed to load fonts'));
-          // Still set to true to allow app to continue
           setFontsLoaded(true);
         }
       }
-    }
+    };
 
     loadFonts();
 
-    return () => {
+    return (): void => {
       isMounted = false;
     };
   }, []);
 
-  return { fontsLoaded, error };
+  return fontsLoaded;
 }; 

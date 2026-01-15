@@ -2,7 +2,7 @@ import DietManagerScreen from '@/screens/health/DietManagerScreen';
 import { Stack } from 'expo-router/stack';
 import React from 'react';
 
-export default function DietManagerRoute() {
+export default function DietManager(): JSX.Element {
     return (
         <>
             <Stack.Screen

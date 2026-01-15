@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { getColor } from '@/theme/colors';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -19,7 +20,7 @@ interface Props {
   router: ReturnType<typeof useRouter>;
 }
 
-const RegisterScreen = ({ router }: Props) => {
+const RegisterScreen: React.FC<Props> = ({ router }) => {
   const { register } = useAuth();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -30,7 +31,7 @@ const RegisterScreen = ({ router }: Props) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const insets = useSafeAreaInsets();
 
-  const handleRegister = async () => {
+  const handleRegister = async (): Promise<void> => {
     if (!username.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -67,7 +68,7 @@ const RegisterScreen = ({ router }: Props) => {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <MaterialIcons name="arrow-back" size={24} color="#5D4037" />
+          <MaterialIcons name="arrow-back" size={24} color={getColor.text()} />
         </TouchableOpacity>
         <Text style={styles.title}>Create Account</Text>
       </View>
@@ -79,7 +80,7 @@ const RegisterScreen = ({ router }: Props) => {
           onChangeText={setUsername}
           style={styles.input}
           mode="outlined"
-          left={<TextInput.Icon icon="account" color="#5D4037" />}
+          left={<TextInput.Icon icon="account" color={getColor.text()} />}
         />
 
         <TextInput
@@ -90,7 +91,7 @@ const RegisterScreen = ({ router }: Props) => {
           keyboardType="email-address"
           style={styles.input}
           mode="outlined"
-          left={<TextInput.Icon icon="email" color="#5D4037" />}
+          left={<TextInput.Icon icon="email" color={getColor.text()} />}
         />
 
         <TextInput
@@ -100,11 +101,11 @@ const RegisterScreen = ({ router }: Props) => {
           secureTextEntry={!showPassword}
           style={styles.input}
           mode="outlined"
-          left={<TextInput.Icon icon="lock" color="#5D4037" />}
+          left={<TextInput.Icon icon="lock" color={getColor.text()} />}
           right={
             <TextInput.Icon
               icon={showPassword ? 'eye-off' : 'eye'}
-              color="#5D4037"
+              color={getColor.text()}
               onPress={() => setShowPassword(!showPassword)}
             />
           }
@@ -117,11 +118,11 @@ const RegisterScreen = ({ router }: Props) => {
           secureTextEntry={!showConfirmPassword}
           style={styles.input}
           mode="outlined"
-          left={<TextInput.Icon icon="lock-check" color="#5D4037" />}
+          left={<TextInput.Icon icon="lock-check" color={getColor.text()} />}
           right={
             <TextInput.Icon
               icon={showConfirmPassword ? 'eye-off' : 'eye'}
-              color="#5D4037"
+              color={getColor.text()}
               onPress={() => setShowConfirmPassword(!showConfirmPassword)}
             />
           }
@@ -135,7 +136,7 @@ const RegisterScreen = ({ router }: Props) => {
           style={styles.registerButton}
           contentStyle={styles.registerButtonContent}
         >
-          Create Account
+          <Text>Create Account</Text>
         </Button>
 
         <View style={styles.loginPrompt}>
@@ -152,7 +153,7 @@ const RegisterScreen = ({ router }: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF8E1',
+    backgroundColor: getColor.background(),
   },
   header: {
     flexDirection: 'row',
@@ -165,18 +166,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#5D4037',
+    color: getColor.text(),
   },
   form: {
     padding: 24,
   },
   input: {
     marginBottom: 16,
-    backgroundColor: 'white',
+    backgroundColor: getColor.background(),
   },
   registerButton: {
     marginTop: 8,
-    backgroundColor: '#5D4037',
+    backgroundColor: getColor.primary(),
   },
   registerButtonContent: {
     paddingVertical: 8,
@@ -188,11 +189,11 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   loginPromptText: {
-    color: '#795548',
+    color: getColor.textLight(),
     fontSize: 14,
   },
   loginLink: {
-    color: '#5D4037',
+    color: getColor.text(),
     fontSize: 14,
     fontWeight: '600',
   },

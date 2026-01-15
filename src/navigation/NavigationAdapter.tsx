@@ -3,7 +3,12 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useLocalSearchParams, usePathname, useRouter } from 'expo-router/build/hooks';
 import { RootStackParamList } from './types';
 
-export function useNavigationAdapter<T extends keyof RootStackParamList>() {
+interface NavigationAdapterReturn<T extends keyof RootStackParamList> {
+  navigation: NativeStackNavigationProp<RootStackParamList, T>;
+  route: RouteProp<RootStackParamList, T>;
+}
+
+export function useNavigationAdapter<T extends keyof RootStackParamList>(): NavigationAdapterReturn<T> {
   const router = useRouter();
   const params = useLocalSearchParams();
   const pathname = usePathname();
@@ -30,9 +35,8 @@ export function useNavigationAdapter<T extends keyof RootStackParamList>() {
         params: params as Record<string, string>,
       });
     },
-    addListener: (event, callback) => {
+    addListener: (_event, _callback) => {
       // Not supported in expo-router
-      console.warn('addListener is not supported in expo-router');
       return () => {};
     },
   };

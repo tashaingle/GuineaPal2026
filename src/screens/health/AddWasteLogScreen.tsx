@@ -1,6 +1,8 @@
 import AppHeader from '@/components/AppHeader';
-import { GuineaPig, PeeColor, PoopColor, PoopConsistency, WasteLog } from '@/navigation/types';
-import colors from '@/theme/colors';
+import { PeeColor, PoopColor, PoopConsistency } from '@/navigation/types';
+import { getColor } from '@/theme/colors';
+import { GuineaPig, WasteLog } from '@/types/guineaPig';
+import { Pet } from '@/types/pet';
 import { loadPets, savePets } from '@/utils/storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -16,12 +18,14 @@ import {
 import { Button, RadioButton, TextInput } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+// Pet type not needed - using GuineaPig
+
 const POOP_CONSISTENCIES: PoopConsistency[] = ['normal', 'soft', 'wet', 'dry', 'diarrhea'];
 const POOP_COLORS: PoopColor[] = ['brown', 'dark_brown', 'green', 'white', 'red', 'black'];
 const PEE_COLORS: PeeColor[] = ['clear', 'cloudy', 'dark_yellow', 'orange', 'red', 'brown'];
 const PEE_VOLUMES: ('normal' | 'excessive' | 'reduced')[] = ['normal', 'excessive', 'reduced'];
 
-const AddWasteLogScreen = () => {
+const AddWasteLogScreen: React.FC = () => {
     const router = useRouter();
     const params = useLocalSearchParams();
     const [type, setType] = useState<'poop' | 'pee'>('poop');
@@ -40,14 +44,14 @@ const AddWasteLogScreen = () => {
     const insets = useSafeAreaInsets();
 
     useEffect(() => {
-        const loadExistingLog = async () => {
+        const loadExistingLog = async (): Promise<void> => {
             if (params.logId && params.isEditing === 'true') {
                 try {
                     const pets = await loadPets();
                     const pet = pets.find(p => p.id === params.petId);
                     if (!pet) return;
 
-                    const log = pet.wasteLogs?.find(l => l.id === params.logId);
+                    const log = (pet as GuineaPig).wasteLogs?.find((l: WasteLog) => l.id === params.logId);
                     if (log) {
                         setExistingLog(log);
                         setIsEditing(true);
@@ -75,7 +79,7 @@ const AddWasteLogScreen = () => {
         loadExistingLog();
     }, [params.logId, params.isEditing]);
 
-    const handleSave = async () => {
+    const handleSave = async (): Promise<void> => {
         try {
             setIsLoading(true);
 
@@ -105,20 +109,22 @@ const AddWasteLogScreen = () => {
                 }),
             };
 
-            const updatedPet: GuineaPig = {
+            const updatedPet = {
                 ...pet,
+                createdAt: pet.createdAt || new Date().toISOString(),
+                updatedAt: pet.updatedAt || new Date().toISOString(),
                 wasteLogs: isEditing
-                    ? (pet.wasteLogs || []).map(log => log.id === newLog.id ? newLog : log)
-                    : [...(pet.wasteLogs || []), newLog],
-            };
+                    ? ((pet as GuineaPig).wasteLogs || []).map((log: WasteLog) => log.id === newLog.id ? newLog : log)
+                    : [...((pet as GuineaPig).wasteLogs || []), newLog],
+            } as GuineaPig;
 
             const updatedPets = pets.map(p => p.id === pet.id ? updatedPet : p);
-            await savePets(updatedPets);
+            await savePets(updatedPets as Pet[]);
 
             Alert.alert('Success', `Waste log ${isEditing ? 'updated' : 'saved'} successfully`, [
                 {
                     text: 'OK',
-                    onPress: () => router.back()
+                    onPress: (): void => router.back()
                 }
             ]);
         } catch (error) {
@@ -129,7 +135,7 @@ const AddWasteLogScreen = () => {
         }
     };
 
-    const formatLabel = (value: string) => {
+    const formatLabel = (value: string): string => {
         return value.split('_').map(word => 
             word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');
@@ -258,12 +264,10 @@ const AddWasteLogScreen = () => {
                         mode="outlined"
                         multiline
                         numberOfLines={4}
-                        placeholder="Any additional observations..."
+                        placeholder="Add any additional notes here..."
                     />
                 </View>
-            </ScrollView>
 
-            <View style={styles.footer}>
                 <Button
                     mode="contained"
                     onPress={handleSave}
@@ -271,9 +275,9 @@ const AddWasteLogScreen = () => {
                     disabled={isLoading}
                     style={styles.saveButton}
                 >
-                    {isEditing ? 'Update Log' : 'Save Log'}
+                    <Text>{isEditing ? 'Update Log' : 'Save Log'}</Text>
                 </Button>
-            </View>
+            </ScrollView>
         </KeyboardAvoidingView>
     );
 };
@@ -281,67 +285,54 @@ const AddWasteLogScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.DEFAULT
+        backgroundColor: getColor.backgroundLight(), // Light cream background to match app theme
     },
     scrollView: {
-        flex: 1
+        flex: 1,
     },
     scrollContent: {
-        padding: 16
-    },
-    footer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: '#FFFFFF',
         padding: 16,
-        paddingBottom: Platform.OS === 'ios' ? 32 : 16,
-        borderTopWidth: 1,
-        borderTopColor: '#E0E0E0',
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    saveButton: {
-        backgroundColor: '#5D4037',
     },
     section: {
-        backgroundColor: colors.background.card,
+        marginBottom: 24,
+        backgroundColor: getColor.white(),
         borderRadius: 12,
         padding: 16,
-        marginBottom: 16,
-        elevation: 2,
-        shadowColor: '#000',
+        shadowColor: getColor.shadow(),
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
+        elevation: 3,
     },
     sectionTitle: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: '600',
-        color: colors.text.primary,
-        marginBottom: 12
+        color: getColor.text(),
+        marginBottom: 16,
     },
     row: {
         flexDirection: 'row',
-        alignItems: 'center',
+        flexWrap: 'wrap',
     },
     input: {
-        backgroundColor: 'white',
+        backgroundColor: getColor.white(),
     },
     frequencyContainer: {
-        marginBottom: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     frequencyInput: {
-        marginBottom: 8,
+        flex: 1,
+        marginRight: 16,
     },
     frequencyTypeContainer: {
-        backgroundColor: 'white',
-        borderRadius: 4,
-        marginTop: 8,
+        flex: 2,
+    },
+    saveButton: {
+        marginTop: 16,
+        backgroundColor: getColor.primary(),
+        borderRadius: 12,
+        paddingVertical: 12,
     },
 });
 

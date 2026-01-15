@@ -8,6 +8,7 @@ import {
     View,
     ViewStyle,
 } from 'react-native';
+import { getColor } from '../theme/colors';
 
 interface StyledButtonProps {
   title: string;
@@ -28,14 +29,14 @@ const StyledButton: React.FC<StyledButtonProps> = ({
     <TouchableOpacity
       style={[
         styles.button,
-        { backgroundColor: color + '10' },
+        { backgroundColor: `${color  }10` },
         style
       ]}
       onPress={onPress}
     >
       <View style={styles.content}>
         {icon && (
-          <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
+          <View style={[styles.iconContainer, { backgroundColor: `${color  }20` }]}>
             <MaterialIcons name={icon} size={24} color={color} />
           </View>
         )}
@@ -50,7 +51,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: getColor.shadow(),
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,

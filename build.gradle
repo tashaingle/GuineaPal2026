@@ -1,0 +1,243 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    ext {
+        buildToolsVersion = "33.0.0"
+        minSdkVersion = 21
+        compileSdkVersion = 33
+        targetSdkVersion = 33
+        ndkVersion = "23.1.7779620"
+        kotlinVersion = "1.7.20"
+        reactNativeVersion = "0.72.6"
+    }
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            url = uri("${rootProject.projectDir}/node_modules/react-native/android")
+        }
+        maven {
+            url = uri("${rootProject.projectDir}/node_modules/@react-native/gradle-plugin")
+        }
+        maven {
+            url = uri("${rootProject.projectDir}/node_modules/expo/android/maven")
+        }
+        maven {
+            url = uri("https://www.jitpack.io")
+        }
+        maven {
+            url = uri("https://maven.google.com")
+        }
+        maven {
+            url = uri("https://oss.sonatype.org/content/repositories/snapshots/")
+        }
+        maven {
+            url = uri("https://plugins.gradle.org/m2/")
+        }
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.0.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+        classpath("com.google.gms:google-services:4.3.15")
+    }
+}
+
+// Force all Kotlin libraries to use the same version
+configurations.all {
+    resolutionStrategy {
+        force "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+        force "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlinVersion"
+        force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
+        force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
+        force "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
+    }
+}
+
+// Configure Java toolchain for all projects
+allprojects {
+    tasks.withType(JavaCompile).configureEach {
+        options.release.set(11)
+    }
+}
+
+// Configure tasks to handle file locking
+tasks.withType(Jar).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    doFirst {
+        // Ensure the output directory exists and is writable
+        destinationDirectory.get().asFile.mkdirs()
+    }
+    doLast {
+        // Wait a bit to ensure file handles are released
+        Thread.sleep(1000)
+    }
+}
+
+
+
+// Configure Gradle to handle transform issues
+gradle.projectsEvaluated {
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    }
+}
+
+
+
+// Configure transform metadata
+gradle.taskGraph.beforeTask { task ->
+    if (task.name.contains('transform')) {
+        task.doFirst {
+            def transformDir = new File("${gradle.gradleUserHomeDir}/caches/${gradle.gradleVersion}/transforms")
+            if (transformDir.exists()) {
+                transformDir.eachDir { dir ->
+                    if (dir.name.contains('metadata')) {
+                        dir.deleteDir()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Configure Gradle properties
+gradle.projectsEvaluated {
+    gradle.startParameter.parallelProjectExecutionEnabled = false
+    gradle.startParameter.buildCacheEnabled = false
+    gradle.startParameter.configureOnDemand = false
+    gradle.startParameter.maxWorkerCount = Runtime.runtime.availableProcessors()
+}
+
+// Disable build cache for all projects
+allprojects {
+    buildscript {
+        configurations.all {
+            resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+        }
+    }
+    configurations.all {
+        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    }
+}
+
+// Configure transform metadata handling
+gradle.taskGraph.whenReady { graph ->
+    graph.allTasks.each { task ->
+        if (task.name.contains('transform')) {
+            task.doFirst {
+                def transformDir = new File("${gradle.gradleUserHomeDir}/caches/${gradle.gradleVersion}/transforms")
+                if (transformDir.exists()) {
+                    transformDir.eachDir { dir ->
+                        if (dir.name.contains('metadata')) {
+                            dir.deleteDir()
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Configure Java toolchain for all projects
+allprojects {
+    tasks.withType(JavaCompile).configureEach {
+        options.release.set(17)
+    }
+    
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = "17"
+            freeCompilerArgs += [
+                "-Xskip-metadata-version-check",
+                "-Xskip-prerelease-check"
+            ]
+        }
+        // Disable Kotlin compilation cache
+        kotlinOptions.useK2 = false
+        kotlinOptions.incremental = false
+    }
+    
+    // Add task to clean Kotlin compilation cache
+    tasks.register('cleanKotlinCache') {
+        doLast {
+            def kotlinCacheDir = new File("${project.buildDir}/kotlin")
+            if (kotlinCacheDir.exists()) {
+                kotlinCacheDir.deleteDir()
+            }
+        }
+    }
+}
+
+
+
+// Disable transforms and caching
+gradle.projectsEvaluated {
+    gradle.startParameter.parallelProjectExecutionEnabled = false
+    gradle.startParameter.buildCacheEnabled = false
+    gradle.startParameter.configureOnDemand = false
+}
+
+
+
+// Clean transform metadata for all tasks
+tasks.all { task ->
+    if (task.name.contains('transform')) {
+        task.doFirst {
+            def transformDir = new File("${gradle.gradleUserHomeDir}/caches/${gradle.gradleVersion}/transforms")
+            if (transformDir.exists()) {
+                transformDir.eachDir { dir ->
+                    if (dir.name.contains('metadata')) {
+                        dir.deleteDir()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Configure Kotlin compilation
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        jvmTarget = "17"
+        freeCompilerArgs += [
+            "-Xskip-metadata-version-check",
+            "-Xno-call-assertions",
+            "-Xno-param-assertions",
+            "-Xno-receiver-assertions"
+        ]
+    }
+}
+
+// Clean build directories
+tasks.register('cleanAll') {
+    doLast {
+        delete "${buildDir}"
+        delete "${gradle.gradleUserHomeDir}/caches/${gradle.gradleVersion}/transforms"
+    }
+}
+
+// Handle file locking
+tasks.withType(JavaCompile).configureEach {
+    options.fork = true
+    options.forkOptions.jvmArgs << '-Dfile.encoding=UTF-8'
+}
+
+// Configure transform metadata handling
+gradle.taskGraph.whenReady { graph ->
+    graph.allTasks.each { task ->
+        if (task.name.contains('transform')) {
+            task.doFirst {
+                def transformDir = new File("${gradle.gradleUserHomeDir}/caches/${gradle.gradleVersion}/transforms")
+                if (transformDir.exists()) {
+                    transformDir.eachDir { dir ->
+                        if (dir.name.contains('metadata')) {
+                            dir.deleteDir()
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+ 

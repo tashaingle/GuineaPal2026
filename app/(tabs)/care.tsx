@@ -1,5 +1,5 @@
 import CareGuideSection from '@/screens/CareGuideSection';
 
-export default function Care() {
+export default function CareTab(): JSX.Element {
   return <CareGuideSection />;
 } 

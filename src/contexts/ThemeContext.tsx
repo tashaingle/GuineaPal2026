@@ -1,3 +1,4 @@
+import colors from '@/theme/colors';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
 
@@ -10,7 +11,7 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }): JSX.Element => {
   const systemColorScheme = useColorScheme();
   const [theme, setTheme] = useState<Theme>(systemColorScheme || 'light');
 
@@ -20,7 +21,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [systemColorScheme]);
 
-  const toggleTheme = () => {
+  const toggleTheme = (): void => {
     setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
   };
 
@@ -29,12 +30,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       {children}
     </ThemeContext.Provider>
   );
-}
+};
 
-export function useTheme() {
+export const useTheme = (): ThemeContextType => {
   const context = useContext(ThemeContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
-} 
+};
+
+type ColorKey = keyof typeof colors;
+type ColorValue = typeof colors[ColorKey];
+
+export const useThemeColor = (colorName: ColorKey): ColorValue => {
+  return colors[colorName];
+}; 

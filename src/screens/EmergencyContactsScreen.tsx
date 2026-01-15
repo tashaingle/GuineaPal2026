@@ -1,16 +1,15 @@
 import AppHeader from '@/components/AppHeader';
-import colors from '@/theme/colors';
+import { getColor } from '@/theme/colors';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -28,7 +27,7 @@ interface FirstAidInstruction {
   emergency: boolean;
 }
 
-const EmergencyContactsScreen = () => {
+export default function EmergencyContactsScreen(): JSX.Element {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [isEditing, setIsEditing] = useState(false);
@@ -96,69 +95,64 @@ const EmergencyContactsScreen = () => {
     }
   ]);
 
-  const loadContacts = async () => {
+  useEffect(() => {
+    loadContacts();
+  }, []);
+
+  const loadContacts = async (): Promise<void> => {
     try {
       const savedContacts = await AsyncStorage.getItem('emergencyContacts');
       if (savedContacts) {
         setEmergencyContacts(JSON.parse(savedContacts));
       }
-    } catch (error) {
-      console.error('Error loading contacts:', error);
+    } catch {
+      // Error handling is silent as per design
     }
   };
 
-  useEffect(() => {
-    loadContacts();
-  }, [loadContacts]);
-
-  const handleDeleteContact = async (contactId: string) => {
-    Alert.alert(
-      'Delete Contact',
-      'Are you sure you want to delete this contact?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const updatedContacts = emergencyContacts.filter(contact => contact.id !== contactId);
-              await AsyncStorage.setItem('emergencyContacts', JSON.stringify(updatedContacts));
-              setEmergencyContacts(updatedContacts);
-            } catch (err) {
-              console.error('Failed to delete contact:', err);
-              Alert.alert('Error', 'Failed to delete contact');
-            }
-          },
-        },
-      ],
-    );
-  };
-
-  const handleEditContact = (contact: Contact) => {
+  const handleEditContact = async (contact: Contact): Promise<void> => {
     router.push({
-      pathname: '/add-emergency-contact',
+      pathname: '/(stack)/add-emergency-contact',
       params: { contact: JSON.stringify(contact) }
     });
   };
 
-  const renderContacts = () => (
+  const handleDeleteContact = async (id: string): Promise<void> => {
+    try {
+      const updatedContacts = emergencyContacts.filter(contact => contact.id !== id);
+      setEmergencyContacts(updatedContacts);
+      await AsyncStorage.setItem('emergencyContacts', JSON.stringify(updatedContacts));
+    } catch {
+      // Error handling is silent as per design
+    }
+  };
+
+  const renderContacts = (): JSX.Element => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Vet Emergency Contacts</Text>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => setIsEditing(!isEditing)}
-        >
-          <MaterialIcons 
-            name="edit" 
-            size={24} 
-            color={colors.primary.DEFAULT} 
-          />
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => router.push('/(stack)/add-emergency-contact')}
+          >
+            <MaterialIcons 
+              name="add" 
+              size={24} 
+              color={getColor.primary()} 
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => setIsEditing(!isEditing)}
+          >
+            <MaterialIcons 
+              name="edit" 
+              size={24} 
+              color={getColor.primary()} 
+            />
+          </TouchableOpacity>
+        </View>
       </View>
       {emergencyContacts.length === 0 ? (
         <Text style={styles.emptyText}>No vet emergency contacts added yet</Text>
@@ -176,13 +170,13 @@ const EmergencyContactsScreen = () => {
                   style={styles.editButton}
                   onPress={() => handleEditContact(contact)}
                 >
-                  <MaterialIcons name="edit" size={24} color={colors.primary.DEFAULT} />
+                  <Text style={styles.editButtonText}>Edit</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.deleteButton}
                   onPress={() => handleDeleteContact(contact.id)}
                 >
-                  <MaterialIcons name="delete" size={24} color={colors.status.error} />
+                  <Text style={styles.deleteButtonText}>Delete</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -192,7 +186,7 @@ const EmergencyContactsScreen = () => {
     </View>
   );
 
-  const renderFirstAidInstructions = () => (
+  const renderFirstAidInstructions = (): JSX.Element => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>First Aid Instructions</Text>
       {firstAidInstructions.map(instruction => (
@@ -207,7 +201,7 @@ const EmergencyContactsScreen = () => {
           </View>
           <View style={styles.stepsContainer}>
             {instruction.steps.map((step, index) => (
-              <View key={index} style={styles.stepRow}>
+              <View key={`${instruction.id}-step-${step.substring(0, 20).replace(/\s+/g, '-')}`} style={styles.stepRow}>
                 <Text style={styles.stepNumber}>{index + 1}</Text>
                 <Text style={styles.stepText}>{step}</Text>
               </View>
@@ -220,54 +214,23 @@ const EmergencyContactsScreen = () => {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <AppHeader
-        title="Emergency Contacts"
-      />
-
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-      >
-        <View style={styles.contentContainer}>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => router.push('/add-emergency-contact')}
-          >
-            <MaterialIcons name="add" size={24} color={colors.background.card} />
-            <Text style={styles.addButtonText}>Add Vet Emergency Contact</Text>
-          </TouchableOpacity>
-
-          {renderContacts()}
-          {renderFirstAidInstructions()}
-        </View>
+      <AppHeader title="Emergency Contacts" />
+      <ScrollView style={styles.content}>
+        {renderContacts()}
+        {renderFirstAidInstructions()}
       </ScrollView>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.DEFAULT,
+    backgroundColor: getColor.backgroundLight(),
   },
-  scrollView: {
+  content: {
     flex: 1,
-  },
-  scrollContent: {
     padding: 16,
-  },
-  contentContainer: {
-    backgroundColor: colors.background.card,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: colors.shadow.DEFAULT,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   section: {
     marginBottom: 24,
@@ -276,89 +239,98 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: getColor.text(),
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  editButton: {
+    padding: 8,
+  },
+  editButtonText: {
+    color: getColor.primary(),
+    fontSize: 14,
     fontWeight: '600',
-    color: colors.text.primary,
+  },
+  deleteButton: {
+    backgroundColor: getColor.error(),
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  deleteButtonText: {
+    color: getColor.white(),
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: getColor.textLight(),
+    fontSize: 16,
+    fontStyle: 'italic',
+    marginTop: 20,
+  },
+  contactCard: {
+    backgroundColor: getColor.cardBackground(),
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: getColor.shadow(),
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   contactInfo: {
     flex: 1,
   },
   contactName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text.primary,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: getColor.text(),
     marginBottom: 4,
   },
   contactPhone: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    marginBottom: 4,
+    fontSize: 16,
+    color: getColor.text(),
+    marginBottom: 2,
   },
   contactRelationship: {
     fontSize: 14,
-    color: colors.text.secondary,
-  },
-  contactCard: {
-    backgroundColor: colors.background.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: colors.shadow.DEFAULT,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    color: getColor.textLight(),
   },
   actionButtons: {
     flexDirection: 'row',
-    gap: 12,
-  },
-  editButton: {
-    padding: 8,
-  },
-  deleteButton: {
-    padding: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    fontStyle: 'italic',
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary.DEFAULT,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: colors.shadow.DEFAULT,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  addButtonText: {
-    color: colors.background.card,
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  editButtonText: {
-    color: colors.text.light,
-    fontSize: 14,
-    fontWeight: '500',
+    justifyContent: 'flex-end',
+    marginTop: 12,
   },
   firstAidCard: {
-    backgroundColor: colors.background.card,
-    padding: 16,
+    backgroundColor: getColor.cardBackground(),
     borderRadius: 12,
-    marginBottom: 8,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: getColor.shadow(),
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   firstAidHeader: {
     flexDirection: 'row',
@@ -367,9 +339,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   firstAidTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text.primary,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: getColor.text(),
+  },
+  emergencyBadge: {
+    backgroundColor: getColor.error(),
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  emergencyText: {
+    color: getColor.white(),
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   stepsContainer: {
     marginTop: 8,
@@ -377,36 +360,25 @@ const styles = StyleSheet.create({
   stepRow: {
     flexDirection: 'row',
     marginBottom: 8,
+    alignItems: 'flex-start',
   },
   stepNumber: {
+    backgroundColor: getColor.primary(),
+    color: getColor.white(),
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.primary.DEFAULT,
-    color: colors.background.DEFAULT,
     textAlign: 'center',
     lineHeight: 24,
-    marginRight: 8,
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginRight: 12,
+    marginTop: 2,
   },
   stepText: {
     flex: 1,
-    fontSize: 14,
-    color: colors.text.primary,
-    lineHeight: 24,
+    fontSize: 16,
+    color: getColor.text(),
+    lineHeight: 22,
   },
-  emergencyBadge: {
-    backgroundColor: colors.status.error,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    alignSelf: 'flex-start',
-    marginTop: 4,
-  },
-  emergencyText: {
-    color: colors.background.DEFAULT,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-});
-
-export default EmergencyContactsScreen; 
+}); 

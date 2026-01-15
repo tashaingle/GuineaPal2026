@@ -2,8 +2,7 @@ module.exports = {
   project: {
     android: {
       sourceDir: './android',
-      manifestPath: './android/app/src/main/AndroidManifest.xml',
-      packageName: 'com.tasha.guineapal',
+      packageName: 'com.guineapal.app'
     },
   },
   dependencies: {
@@ -13,4 +12,5 @@ module.exports = {
       },
     },
   },
+  assets: ['./assets/fonts/'],
 }; 

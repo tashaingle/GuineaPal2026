@@ -6,10 +6,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   slug: 'guineapal',
   version: '1.0.0',
   orientation: 'portrait',
-  icon: './assets/icon.png',
+  icon: './assets/images/icon.png',
   userInterfaceStyle: 'automatic',
   splash: {
-    image: './assets/splash.png',
+    image: './assets/images/splash.png',
     resizeMode: 'contain',
     backgroundColor: '#ffffff'
   },
@@ -17,30 +17,33 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.guineapal.app',
-    config: {
-      googleMobileAdsAppId: 'ca-app-pub-1405426793776119~1660161441'
+
+    // ✅ Required for Apple export compliance
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false
     }
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: './assets/adaptive-icon.png',
+      foregroundImage: './assets/images/adaptive-icon.png',
       backgroundColor: '#ffffff'
     },
     package: 'com.guineapal.app',
-    config: {
-      googleMobileAdsAppId: 'ca-app-pub-1405426793776119~1660161441'
-    }
+    versionCode: 3
   },
   web: {
-    favicon: './assets/favicon.png'
+    favicon: './assets/images/favicon.png'
   },
   plugins: [
     'expo-router',
     'react-native-iap',
     [
-      'expo-ads-admob',
+      'react-native-google-mobile-ads',
       {
-        userTrackingPermission: 'This identifier will be used to deliver personalized ads to you.'
+        androidAppId: 'ca-app-pub-1405426793776119~1660161441',
+        iosAppId: 'ca-app-pub-1405426793776119~1660161441',
+        userMessagingPlatform: false,
+        delayAppMeasurementInit: true
       }
     ]
   ],
@@ -48,5 +51,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   experiments: {
     typedRoutes: true,
     tsconfigPaths: true
+  },
+  extra: {
+    eas: {
+      projectId: 'd149b9fe-85ba-43b2-9577-b176594a069a'
+    }
   }
-}); 
+});

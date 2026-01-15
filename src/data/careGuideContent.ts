@@ -4,11 +4,18 @@ export const CARE_GUIDE_CONTENT = {
     content: [
       {
         title: 'Calculate Your Cage Size',
+        component: 'CageSizeCalculator',
         text: [
           'Use this calculator to determine the recommended cage size for your guinea pigs.',
           'The minimum recommended space per guinea pig is 7.5 square feet.',
           'For multiple guinea pigs, add 2.5 square feet for each additional pig.',
           'Remember that bigger is always better for your guinea pigs\' health and happiness.'
+        ],
+        tips: [
+          'Bigger is always better for guinea pigs',
+          'Consider your available space when choosing dimensions',
+          'Remember to account for accessories and hideouts',
+          'The calculator provides both minimum and recommended sizes'
         ]
       }
     ]
@@ -16,19 +23,6 @@ export const CARE_GUIDE_CONTENT = {
   'Housing': {
     title: 'Housing',
     content: [
-      {
-        title: 'Cage Size Calculator',
-        component: 'CageSizeCalculator',
-        text: [
-          'Use our calculator to determine the appropriate cage size for your guinea pigs.',
-          'The calculator provides both minimum and recommended sizes, along with common cage dimensions.'
-        ],
-        tips: [
-          'Bigger is always better for guinea pigs',
-          'Consider your available space when choosing dimensions',
-          'Remember to account for accessories and hideouts'
-        ]
-      },
       {
         title: 'Cage Requirements',
         text: [

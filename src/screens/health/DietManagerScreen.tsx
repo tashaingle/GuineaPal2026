@@ -1,9 +1,10 @@
 import AppHeader from '@/components/AppHeader';
-import colors from '@/theme/colors';
+import { RootStackParamList } from '@/navigation/types';
+import { getColor } from '@/theme/colors';
 import { loadDiet, saveDiet } from '@/utils/petStorage';
 import { loadPets } from '@/utils/storage';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,9 +24,8 @@ type Diet = {
     favoriteVegetables: string[];
 };
 
-export default function DietManagerScreen() {
-    const navigation = useNavigation();
-    const route = useRoute();
+export default function DietManagerScreen(): JSX.Element {
+    const route = useRoute<RouteProp<RootStackParamList, 'diet-manager'>>();
     const insets = useSafeAreaInsets();
     const [petId, setPetId] = useState<string>('');
     const [diet, setDiet] = useState<Diet>({
@@ -49,7 +49,7 @@ export default function DietManagerScreen() {
     const [favoriteType, setFavoriteType] = useState<'fruits' | 'vegetables'>('fruits');
 
     useEffect(() => {
-        const init = async () => {
+        const init = async (): Promise<void> => {
             const pets = await loadPets();
             const currentPet = pets.find(p => p.id === route.params?.petId);
             if (currentPet) {
@@ -63,7 +63,7 @@ export default function DietManagerScreen() {
         init();
     }, [route.params?.petId]);
 
-    const handleSave = async () => {
+    const handleSave = async (): Promise<void> => {
         if (!newItem.name || !newItem.amount || !newItem.frequency) {
             Alert.alert('Error', 'Please fill in all required fields');
             return;
@@ -81,27 +81,7 @@ export default function DietManagerScreen() {
         setNewItem({ name: '', amount: '', frequency: '', notes: '' });
     };
 
-    const handleDelete = async (itemId: string) => {
-        Alert.alert(
-            'Delete Food Item',
-            'Are you sure you want to delete this food item?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: async () => {
-                        const updatedItems = diet.foodItems.filter(item => item.id !== itemId);
-                        const updatedDiet = { ...diet, foodItems: updatedItems };
-                        setDiet(updatedDiet);
-                        await saveDiet(petId, updatedDiet);
-                    }
-                }
-            ]
-        );
-    };
-
-    const handleAddAllergy = async () => {
+    const handleAddAllergy = async (): Promise<void> => {
         if (!newAllergy.trim()) return;
         const updatedAllergies = [...diet.allergies, newAllergy.trim()];
         const updatedDiet = { ...diet, allergies: updatedAllergies };
@@ -110,14 +90,14 @@ export default function DietManagerScreen() {
         setNewAllergy('');
     };
 
-    const handleRemoveAllergy = async (allergy: string) => {
+    const handleRemoveAllergy = async (allergy: string): Promise<void> => {
         const updatedAllergies = diet.allergies.filter(a => a !== allergy);
         const updatedDiet = { ...diet, allergies: updatedAllergies };
         setDiet(updatedDiet);
         await saveDiet(petId, updatedDiet);
     };
 
-    const handleAddFavorite = async () => {
+    const handleAddFavorite = async (): Promise<void> => {
         if (!newFavorite.trim()) return;
         const updatedFavorites = favoriteType === 'fruits'
             ? [...diet.favoriteFruits, newFavorite.trim()]
@@ -131,7 +111,7 @@ export default function DietManagerScreen() {
         setNewFavorite('');
     };
 
-    const handleRemoveFavorite = async (item: string, type: 'fruits' | 'vegetables') => {
+    const handleRemoveFavorite = async (item: string, type: 'fruits' | 'vegetables'): Promise<void> => {
         const updatedFavorites = type === 'fruits'
             ? diet.favoriteFruits.filter(f => f !== item)
             : diet.favoriteVegetables.filter(f => f !== item);
@@ -153,15 +133,15 @@ export default function DietManagerScreen() {
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Allergies</Text>
                         <TouchableOpacity onPress={() => setShowAllergiesModal(true)}>
-                            <MaterialIcons name="add" size={24} color={colors.primary.DEFAULT} />
+                            <MaterialIcons name="add" size={24} color={getColor.primary()} />
                         </TouchableOpacity>
                     </View>
                     <View style={styles.tagsContainer}>
-                        {diet.allergies.map((allergy, index) => (
-                            <View key={index} style={styles.tag}>
+                        {diet.allergies.map((allergy) => (
+                            <View key={`allergy-${allergy}`} style={styles.tag}>
                                 <Text style={styles.tagText}>{allergy}</Text>
                                 <TouchableOpacity onPress={() => handleRemoveAllergy(allergy)}>
-                                    <MaterialIcons name="close" size={16} color={colors.text.primary} />
+                                    <MaterialIcons name="close" size={16} color={getColor.text()} />
                                 </TouchableOpacity>
                             </View>
                         ))}
@@ -176,15 +156,15 @@ export default function DietManagerScreen() {
                             setFavoriteType('fruits');
                             setShowFavoritesModal(true);
                         }}>
-                            <MaterialIcons name="add" size={24} color={colors.primary.DEFAULT} />
+                            <MaterialIcons name="add" size={24} color={getColor.primary()} />
                         </TouchableOpacity>
                     </View>
                     <View style={styles.tagsContainer}>
-                        {diet.favoriteFruits.map((fruit, index) => (
-                            <View key={index} style={styles.tag}>
+                        {diet.favoriteFruits.map((fruit) => (
+                            <View key={`fruit-${fruit}`} style={styles.tag}>
                                 <Text style={styles.tagText}>{fruit}</Text>
                                 <TouchableOpacity onPress={() => handleRemoveFavorite(fruit, 'fruits')}>
-                                    <MaterialIcons name="close" size={16} color={colors.text.primary} />
+                                    <MaterialIcons name="close" size={16} color={getColor.text()} />
                                 </TouchableOpacity>
                             </View>
                         ))}
@@ -199,15 +179,15 @@ export default function DietManagerScreen() {
                             setFavoriteType('vegetables');
                             setShowFavoritesModal(true);
                         }}>
-                            <MaterialIcons name="add" size={24} color={colors.primary.DEFAULT} />
+                            <MaterialIcons name="add" size={24} color={getColor.primary()} />
                         </TouchableOpacity>
                     </View>
                     <View style={styles.tagsContainer}>
-                        {diet.favoriteVegetables.map((vegetable, index) => (
-                            <View key={index} style={styles.tag}>
+                        {diet.favoriteVegetables.map((vegetable) => (
+                            <View key={`vegetable-${vegetable}`} style={styles.tag}>
                                 <Text style={styles.tagText}>{vegetable}</Text>
                                 <TouchableOpacity onPress={() => handleRemoveFavorite(vegetable, 'vegetables')}>
-                                    <MaterialIcons name="close" size={16} color={colors.text.primary} />
+                                    <MaterialIcons name="close" size={16} color={getColor.text()} />
                                 </TouchableOpacity>
                             </View>
                         ))}
@@ -222,37 +202,31 @@ export default function DietManagerScreen() {
                         <Text style={styles.modalTitle}>
                             {editingItem ? 'Edit Food Item' : 'Add Food Item'}
                         </Text>
-                        
                         <TextInput
                             style={styles.input}
-                            placeholder="Food Name"
+                            placeholder="Food name"
                             value={newItem.name}
-                            onChangeText={text => setNewItem(prev => ({ ...prev, name: text }))}
+                            onChangeText={(text) => setNewItem({ ...newItem, name: text })}
                         />
-                        
                         <TextInput
                             style={styles.input}
-                            placeholder="Amount (e.g., 1 cup, 100g)"
+                            placeholder="Amount"
                             value={newItem.amount}
-                            onChangeText={text => setNewItem(prev => ({ ...prev, amount: text }))}
+                            onChangeText={(text) => setNewItem({ ...newItem, amount: text })}
                         />
-                        
                         <TextInput
                             style={styles.input}
-                            placeholder="Frequency (e.g., twice daily, every 4 hours)"
+                            placeholder="Frequency"
                             value={newItem.frequency}
-                            onChangeText={text => setNewItem(prev => ({ ...prev, frequency: text }))}
+                            onChangeText={(text) => setNewItem({ ...newItem, frequency: text })}
                         />
-                        
                         <TextInput
                             style={[styles.input, styles.textArea]}
                             placeholder="Notes (optional)"
                             value={newItem.notes}
-                            onChangeText={text => setNewItem(prev => ({ ...prev, notes: text }))}
+                            onChangeText={(text) => setNewItem({ ...newItem, notes: text })}
                             multiline
-                            numberOfLines={3}
                         />
-
                         <View style={styles.modalActions}>
                             <TouchableOpacity 
                                 style={[styles.modalButton, styles.cancelButton]}
@@ -264,7 +238,6 @@ export default function DietManagerScreen() {
                             >
                                 <Text style={styles.buttonText}>Cancel</Text>
                             </TouchableOpacity>
-                            
                             <TouchableOpacity 
                                 style={[styles.modalButton, styles.saveButton]}
                                 onPress={handleSave}
@@ -354,19 +327,19 @@ export default function DietManagerScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.DEFAULT
+        backgroundColor: getColor.backgroundLight()
     },
     content: {
         flex: 1,
         padding: 16
     },
     section: {
-        backgroundColor: colors.background.card,
+        backgroundColor: getColor.white(),
         borderRadius: 12,
         padding: 16,
         marginBottom: 16,
         elevation: 2,
-        shadowColor: '#000',
+        shadowColor: getColor.shadow(),
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -380,7 +353,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: colors.text.primary
+        color: getColor.text()
     },
     tagsContainer: {
         flexDirection: 'row',
@@ -390,16 +363,16 @@ const styles = StyleSheet.create({
     tag: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.background.DEFAULT,
+        backgroundColor: getColor.background(),
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: colors.border.light
+        borderColor: getColor.borderLight()
     },
     tagText: {
         fontSize: 14,
-        color: colors.text.primary,
+        color: getColor.text(),
         marginRight: 4
     },
     modalOverlay: {
@@ -408,31 +381,37 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: getColor.modalOverlay(),
         justifyContent: 'center',
         alignItems: 'center'
     },
     modalContent: {
-        backgroundColor: colors.background.card,
+        backgroundColor: getColor.white(),
         borderRadius: 12,
         padding: 20,
         width: '90%',
-        maxWidth: 400
+        maxWidth: 400,
+        shadowColor: getColor.shadow(),
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+        elevation: 8,
     },
     modalTitle: {
         fontSize: 20,
         fontWeight: '600',
-        color: colors.text.primary,
+        color: getColor.text(),
         marginBottom: 16
     },
     input: {
-        backgroundColor: colors.background.DEFAULT,
+        backgroundColor: getColor.white(),
         borderWidth: 1,
-        borderColor: colors.border.DEFAULT,
+        borderColor: getColor.border(),
         borderRadius: 8,
         padding: 12,
         marginBottom: 12,
-        fontSize: 16
+        fontSize: 16,
+        color: getColor.text()
     },
     textArea: {
         height: 100,
@@ -450,18 +429,19 @@ const styles = StyleSheet.create({
         marginLeft: 8
     },
     cancelButton: {
-        backgroundColor: colors.background.DEFAULT,
+        backgroundColor: getColor.background(),
         borderWidth: 1,
-        borderColor: colors.border.DEFAULT
+        borderColor: getColor.border()
     },
     saveButton: {
-        backgroundColor: colors.primary.DEFAULT
+        backgroundColor: getColor.primary()
     },
     buttonText: {
         fontSize: 16,
-        fontWeight: '500'
+        fontWeight: '500',
+        color: getColor.text()
     },
     saveButtonText: {
-        color: colors.white
+        color: getColor.white()
     }
 }); 

@@ -2,7 +2,6 @@ import AppHeader from '@/components/AppHeader';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -17,9 +16,9 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import { FAB, Provider as PaperProvider } from 'react-native-paper';
+import { FAB as Fab, Provider as PaperProvider } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import colors from '../theme/colors';
+import { getColor } from '../theme/colors';
 
 interface GuineaGramPost {
   id: string;
@@ -28,20 +27,19 @@ interface GuineaGramPost {
   caption?: string;
 }
 
-export default function GuineaGramScreen() {
+const GuineaGramScreen: React.FC = (): JSX.Element => {
   const [posts, setPosts] = useState<GuineaGramPost[]>([]);
   const [selectedPost, setSelectedPost] = useState<GuineaGramPost | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteText, setNoteText] = useState('');
   const insets = useSafeAreaInsets();
-  const router = useRouter();
 
   useEffect(() => {
     loadPosts();
   }, []);
 
-  const loadPosts = async () => {
+  const loadPosts = async (): Promise<void> => {
     try {
       const savedPosts = await AsyncStorage.getItem('guineagram_posts');
       if (savedPosts) {
@@ -54,20 +52,20 @@ export default function GuineaGramScreen() {
     }
   };
 
-  const handleAddPhoto = async () => {
+  const handleAddPhoto = async (): Promise<void> => {
     try {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
         Alert.alert('Permission needed', 'Please grant permission to access your photos');
-      return;
-    }
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const newPost: GuineaGramPost = {
@@ -87,7 +85,7 @@ export default function GuineaGramScreen() {
     }
   };
 
-  const handleDeletePost = async (id: string) => {
+  const handleDeletePost = async (id: string): Promise<void> => {
     try {
       const updatedPosts = posts.filter(post => post.id !== id);
       await AsyncStorage.setItem('guineagram_posts', JSON.stringify(updatedPosts));
@@ -98,7 +96,7 @@ export default function GuineaGramScreen() {
     }
   };
 
-  const handleSaveNote = async () => {
+  const handleSaveNote = async (): Promise<void> => {
     if (selectedPost) {
       try {
         const updatedPosts = posts.map(post =>
@@ -106,8 +104,8 @@ export default function GuineaGramScreen() {
             ? { ...post, caption: noteText }
             : post
         );
-              await AsyncStorage.setItem('guineagram_posts', JSON.stringify(updatedPosts));
-              setPosts(updatedPosts);
+        await AsyncStorage.setItem('guineagram_posts', JSON.stringify(updatedPosts));
+        setPosts(updatedPosts);
         setSelectedPost({ ...selectedPost, caption: noteText });
         setIsEditingNote(false);
       } catch (error) {
@@ -120,7 +118,7 @@ export default function GuineaGramScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={colors.primary.DEFAULT} />
+        <ActivityIndicator size="large" color={getColor.primary()} />
       </View>
     );
   }
@@ -185,7 +183,7 @@ export default function GuineaGramScreen() {
                       }
                     }}
                   >
-                    <MaterialIcons name="note-add" size={24} color={colors.white} />
+                    <MaterialIcons name="note-add" size={24} color={getColor.background()} />
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.deleteButton}
@@ -203,7 +201,7 @@ export default function GuineaGramScreen() {
                             {
                               text: 'Delete',
                               style: 'destructive',
-                              onPress: () => {
+                              onPress: (): void => {
                                 handleDeletePost(selectedPost.id);
                                 setSelectedPost(null);
                                 setIsEditingNote(false);
@@ -214,7 +212,7 @@ export default function GuineaGramScreen() {
                       }
                     }}
                   >
-                    <MaterialIcons name="delete" size={24} color={colors.white} />
+                    <MaterialIcons name="delete" size={24} color={getColor.background()} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -225,7 +223,7 @@ export default function GuineaGramScreen() {
                     value={noteText}
                     onChangeText={setNoteText}
                     placeholder="Add a note..."
-                    placeholderTextColor={colors.text.secondary}
+                    placeholderTextColor={getColor.textLight()}
                     multiline
                     autoFocus
                   />
@@ -247,13 +245,7 @@ export default function GuineaGramScreen() {
                     </TouchableOpacity>
                   </View>
                 </View>
-              ) : (
-                selectedPost?.caption ? (
-                  <View style={styles.noteContainer}>
-                    <Text style={styles.noteText}>{selectedPost.caption}</Text>
-                  </View>
-                ) : null
-              )}
+              ) : null}
               {selectedPost && (
                 <TouchableOpacity
                   style={styles.expandedImage}
@@ -268,53 +260,32 @@ export default function GuineaGramScreen() {
                     style={styles.expandedImage}
                     resizeMode="contain"
                   />
+                  {selectedPost.caption ? (
+                    <View style={styles.captionOverlay}>
+                      <Text style={styles.captionText}>{selectedPost.caption}</Text>
+                    </View>
+                  ) : null}
                 </TouchableOpacity>
               )}
             </View>
           </View>
         </Modal>
 
-        <FAB
+        <Fab
           icon="camera"
-            style={styles.fab}
+          style={styles.fab}
           onPress={handleAddPhoto}
-          color={colors.white}
-          />
+          color={getColor.background()}
+        />
       </View>
     </PaperProvider>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.DEFAULT,
-  },
-  header: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
-    backgroundColor: colors.background.card,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    marginTop: 16,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
-  backButton: {
-    marginRight: 16,
-    padding: 8
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '600'
+    backgroundColor: getColor.backgroundLight(),
   },
   gridContainer: {
     flex: 1,
@@ -339,11 +310,11 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 0,
-    backgroundColor: colors.primary.DEFAULT,
+    backgroundColor: getColor.primary(),
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    backgroundColor: getColor.overlay(),
   },
   modalOverlay: {
     position: 'absolute',
@@ -363,7 +334,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalDate: {
-    color: colors.white,
+    color: getColor.background(),
     fontSize: 16,
   },
   headerButtons: {
@@ -375,32 +346,27 @@ const styles = StyleSheet.create({
     padding: 8,
     minWidth: 40,
     alignItems: 'center',
-    backgroundColor: colors.primary.DEFAULT,
+    backgroundColor: getColor.primary(),
     borderRadius: 8,
   },
   deleteButton: {
     padding: 8,
     minWidth: 40,
     alignItems: 'center',
-    backgroundColor: colors.buttons.red,
+    backgroundColor: getColor.buttonRed(),
     borderRadius: 8,
   },
   noteContainer: {
     padding: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: getColor.overlay(),
   },
   noteInput: {
-    backgroundColor: colors.background.DEFAULT,
+    backgroundColor: getColor.background(),
     borderRadius: 8,
     padding: 12,
-    color: colors.text.primary,
+    color: getColor.text(),
     minHeight: 100,
     textAlignVertical: 'top',
-  },
-  noteText: {
-    color: colors.white,
-    fontSize: 16,
-    lineHeight: 24,
   },
   noteButtons: {
     flexDirection: 'row',
@@ -409,13 +375,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   cancelButton: {
-    backgroundColor: colors.buttons.orange,
+    backgroundColor: getColor.buttonOrange(),
   },
   saveButton: {
-    backgroundColor: colors.buttons.green,
+    backgroundColor: getColor.buttonGreen(),
   },
   buttonText: {
-    color: colors.white,
+    color: getColor.background(),
     fontSize: 16,
     fontWeight: '600',
   },
@@ -427,4 +393,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  captionOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: getColor.overlay(),
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    alignItems: 'center',
+  },
+  captionText: {
+    color: getColor.white(),
+    fontSize: 16,
+    textAlign: 'center',
+  },
 });
+
+export default GuineaGramScreen;

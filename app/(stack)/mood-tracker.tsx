@@ -5,7 +5,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 
-export default function MoodTrackerRoute() {
+export default function MoodTrackerRoute(): JSX.Element {
   const params = useLocalSearchParams();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'mood-tracker'>>();
   

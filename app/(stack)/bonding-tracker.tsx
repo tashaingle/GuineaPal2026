@@ -2,7 +2,7 @@ import BondingTrackerScreen from '@/screens/BondingTrackerScreen';
 import { Stack } from 'expo-router/stack';
 import React from 'react';
 
-export default function BondingTrackerRoute() {
+export default function BondingTrackerRoute(): JSX.Element {
   return (
     <>
       <Stack.Screen

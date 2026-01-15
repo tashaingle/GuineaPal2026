@@ -1,5 +1,6 @@
 import { DietPreferences, FeedingSchedule, HealthRecord, Medication, VetAppointment, WeightRecord } from '@/navigation/types';
 import { GuineaPig } from '@/types/guineaPig';
+import logger from '@/utils/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEYS = {
@@ -14,7 +15,7 @@ const STORAGE_KEYS = {
 };
 
 // Health Records
-export const saveHealthRecord = async (petId: string, record: HealthRecord) => {
+export const saveHealthRecord = async (petId: string, record: HealthRecord): Promise<void> => {
   const records = await loadHealthRecords(petId);
   const updatedRecords = [...records, record];
   await AsyncStorage.setItem(
@@ -27,14 +28,13 @@ export const loadHealthRecords = async (petId: string): Promise<HealthRecord[]> 
   try {
     const records = await AsyncStorage.getItem(STORAGE_KEYS.HEALTH_RECORDS + petId);
     return records ? JSON.parse(records) : [];
-  } catch (error) {
-    console.error('Failed to load health records:', error);
+  } catch {
     return [];
   }
 };
 
 // Medications
-export const saveMedication = async (petId: string, medication: Medication) => {
+export const saveMedication = async (petId: string, medication: Medication): Promise<void> => {
   const medications = await loadMedications(petId);
   const updatedMedications = [...medications, medication];
   await AsyncStorage.setItem(
@@ -47,14 +47,13 @@ export const loadMedications = async (petId: string): Promise<Medication[]> => {
   try {
     const medications = await AsyncStorage.getItem(STORAGE_KEYS.MEDICATIONS + petId);
     return medications ? JSON.parse(medications) : [];
-  } catch (error) {
-    console.error('Failed to load medications:', error);
+  } catch {
     return [];
   }
 };
 
 // Vet Appointments
-export const saveVetAppointment = async (petId: string, appointment: VetAppointment) => {
+export const saveVetAppointment = async (petId: string, appointment: VetAppointment): Promise<void> => {
   const appointments = await loadVetAppointments(petId);
   const updatedAppointments = [...appointments, appointment];
   await AsyncStorage.setItem(
@@ -67,14 +66,13 @@ export const loadVetAppointments = async (petId: string): Promise<VetAppointment
   try {
     const appointments = await AsyncStorage.getItem(STORAGE_KEYS.VET_APPOINTMENTS + petId);
     return appointments ? JSON.parse(appointments) : [];
-  } catch (error) {
-    console.error('Failed to load vet appointments:', error);
+  } catch {
     return [];
   }
 };
 
 // Weight Records
-export const saveWeightRecord = async (petId: string, record: WeightRecord) => {
+export const saveWeightRecord = async (petId: string, record: WeightRecord): Promise<void> => {
   const records = await loadWeightRecords(petId);
   const updatedRecords = [...records, record];
   await AsyncStorage.setItem(
@@ -87,13 +85,12 @@ export const loadWeightRecords = async (petId: string): Promise<WeightRecord[]> 
   try {
     const records = await AsyncStorage.getItem(STORAGE_KEYS.WEIGHT_RECORDS + petId);
     return records ? JSON.parse(records) : [];
-  } catch (error) {
-    console.error('Failed to load weight records:', error);
+  } catch {
     return [];
   }
 };
 
-export const updateWeightRecord = async (petId: string, updatedRecord: WeightRecord) => {
+export const updateWeightRecord = async (petId: string, updatedRecord: WeightRecord): Promise<void> => {
   const records = await loadWeightRecords(petId);
   const updatedRecords = records.map(record => 
     record.id === updatedRecord.id ? updatedRecord : record
@@ -105,7 +102,7 @@ export const updateWeightRecord = async (petId: string, updatedRecord: WeightRec
 };
 
 // Update functions
-export const updateHealthRecord = async (petId: string, updatedRecord: HealthRecord) => {
+export const updateHealthRecord = async (petId: string, updatedRecord: HealthRecord): Promise<void> => {
   const records = await loadHealthRecords(petId);
   const updatedRecords = records.map(record => 
     record.id === updatedRecord.id ? updatedRecord : record
@@ -116,7 +113,7 @@ export const updateHealthRecord = async (petId: string, updatedRecord: HealthRec
   );
 };
 
-export const updateMedication = async (petId: string, updatedMedication: Medication) => {
+export const updateMedication = async (petId: string, updatedMedication: Medication): Promise<void> => {
   const medications = await loadMedications(petId);
   const updatedMedications = medications.map(medication => 
     medication.id === updatedMedication.id ? updatedMedication : medication
@@ -127,7 +124,7 @@ export const updateMedication = async (petId: string, updatedMedication: Medicat
   );
 };
 
-export const updateVetAppointment = async (petId: string, updatedAppointment: VetAppointment) => {
+export const updateVetAppointment = async (petId: string, updatedAppointment: VetAppointment): Promise<void> => {
   const appointments = await loadVetAppointments(petId);
   const updatedAppointments = appointments.map(appointment => 
     appointment.id === updatedAppointment.id ? updatedAppointment : appointment
@@ -139,7 +136,7 @@ export const updateVetAppointment = async (petId: string, updatedAppointment: Ve
 };
 
 // Delete functions
-export const deleteHealthRecord = async (petId: string, recordId: string) => {
+export const deleteHealthRecord = async (petId: string, recordId: string): Promise<void> => {
   const records = await loadHealthRecords(petId);
   const updatedRecords = records.filter(record => record.id !== recordId);
   await AsyncStorage.setItem(
@@ -148,7 +145,7 @@ export const deleteHealthRecord = async (petId: string, recordId: string) => {
   );
 };
 
-export const deleteMedication = async (petId: string, medicationId: string) => {
+export const deleteMedication = async (petId: string, medicationId: string): Promise<void> => {
   const medications = await loadMedications(petId);
   const updatedMedications = medications.filter(medication => medication.id !== medicationId);
   await AsyncStorage.setItem(
@@ -157,7 +154,7 @@ export const deleteMedication = async (petId: string, medicationId: string) => {
   );
 };
 
-export const deleteVetAppointment = async (petId: string, appointmentId: string) => {
+export const deleteVetAppointment = async (petId: string, appointmentId: string): Promise<void> => {
   const appointments = await loadVetAppointments(petId);
   const updatedAppointments = appointments.filter(appointment => appointment.id !== appointmentId);
   await AsyncStorage.setItem(
@@ -166,7 +163,7 @@ export const deleteVetAppointment = async (petId: string, appointmentId: string)
   );
 };
 
-export const deleteWeightRecord = async (petId: string, recordId: string) => {
+export const deleteWeightRecord = async (petId: string, recordId: string): Promise<void> => {
   const records = await loadWeightRecords(petId);
   const updatedRecords = records.filter(record => record.id !== recordId);
   await AsyncStorage.setItem(
@@ -176,7 +173,7 @@ export const deleteWeightRecord = async (petId: string, recordId: string) => {
 };
 
 // Diet Preferences
-export const saveDietPreferences = async (petId: string, preferences: DietPreferences) => {
+export const saveDietPreferences = async (petId: string, preferences: DietPreferences): Promise<void> => {
   await AsyncStorage.setItem(
     STORAGE_KEYS.DIET_PREFERENCES + petId,
     JSON.stringify(preferences)
@@ -187,14 +184,13 @@ export const loadDietPreferences = async (petId: string): Promise<DietPreference
   try {
     const preferences = await AsyncStorage.getItem(STORAGE_KEYS.DIET_PREFERENCES + petId);
     return preferences ? JSON.parse(preferences) : null;
-  } catch (error) {
-    console.error('Failed to load diet preferences:', error);
+  } catch {
     return null;
   }
 };
 
 // Feeding Schedule
-export const saveFeedingSchedule = async (petId: string, schedule: FeedingSchedule) => {
+export const saveFeedingSchedule = async (petId: string, schedule: FeedingSchedule): Promise<void> => {
   await AsyncStorage.setItem(
     STORAGE_KEYS.FEEDING_SCHEDULE + petId,
     JSON.stringify(schedule)
@@ -205,8 +201,7 @@ export const loadFeedingSchedule = async (petId: string): Promise<FeedingSchedul
   try {
     const schedule = await AsyncStorage.getItem(STORAGE_KEYS.FEEDING_SCHEDULE + petId);
     return schedule ? JSON.parse(schedule) : null;
-  } catch (error) {
-    console.error('Failed to load feeding schedule:', error);
+  } catch {
     return null;
   }
 };
@@ -215,8 +210,7 @@ export const loadPets = async (): Promise<GuineaPig[]> => {
     try {
         const petsData = await AsyncStorage.getItem('pets');
         return petsData ? JSON.parse(petsData) : [];
-    } catch (error) {
-        console.error('Error loading pets:', error);
+    } catch {
         return [];
     }
 };
@@ -224,9 +218,8 @@ export const loadPets = async (): Promise<GuineaPig[]> => {
 export const savePets = async (pets: GuineaPig[]): Promise<void> => {
     try {
         await AsyncStorage.setItem('pets', JSON.stringify(pets));
-    } catch (error) {
-        console.error('Error saving pets:', error);
-        throw error;
+    } catch {
+        throw new Error('Failed to save pets');
     }
 };
 
@@ -256,8 +249,7 @@ export async function loadDiet(petId: string): Promise<Diet | null> {
             };
         }
         return null;
-    } catch (error) {
-        console.error('Error loading diet:', error);
+    } catch {
         return null;
     }
 }
@@ -266,6 +258,7 @@ export async function saveDiet(petId: string, diet: Diet): Promise<void> {
     try {
         await AsyncStorage.setItem(`diet_${petId}`, JSON.stringify(diet));
     } catch (error) {
-        console.error('Error saving diet:', error);
+        logger.error('Failed to save diet:', error);
+        throw new Error('Failed to save diet');
     }
 } 

@@ -1,7 +1,6 @@
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { useAuth } from '@/contexts/AuthContext';
 import { RootStackParamList } from '@/navigation/types';
-import AchievementsScreen from '@/screens/AchievementsScreen';
 import AddEditPetScreen from '@/screens/AddEditPetScreen';
 import ForgotPasswordScreen from '@/screens/auth/ForgotPasswordScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
@@ -29,22 +28,23 @@ import SafeFoodsScreen from '@/screens/SafeFoodsScreen';
 import SettingsScreen from '@/screens/SettingsScreen';
 import SymptomCheckerScreen from '@/screens/SymptomCheckerScreen';
 import WelcomeScreen from '@/screens/WelcomeScreen';
-import colors from '@/theme/colors';
+import { getColor } from '@/theme/colors';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+;
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const AuthStack = () => (
+const AuthStack = (): JSX.Element => (
   <Stack.Navigator
     screenOptions={{
       headerShown: false,
       animation: 'slide_from_right',
-      contentStyle: { backgroundColor: colors.background.DEFAULT },
+      contentStyle: { backgroundColor: getColor.background() },
       animationDuration: 200,
       gestureEnabled: true,
       gestureDirection: 'horizontal',
@@ -56,12 +56,12 @@ const AuthStack = () => (
   </Stack.Navigator>
 );
 
-const MainStack = () => (
+const MainStack = (): JSX.Element => (
   <Stack.Navigator
     screenOptions={{
       headerShown: false,
       animation: 'slide_from_right',
-      contentStyle: { backgroundColor: colors.background.DEFAULT },
+      contentStyle: { backgroundColor: getColor.background() },
       animationDuration: 200,
       gestureEnabled: true,
       gestureDirection: 'horizontal',
@@ -83,7 +83,6 @@ const MainStack = () => (
     <Stack.Screen name="mood-tracker" component={MoodTrackerScreen} />
     <Stack.Screen name="care-schedule" component={CareScheduleScreen} />
     <Stack.Screen name="diet-manager" component={DietManagerScreen} />
-    <Stack.Screen name="achievements" component={AchievementsScreen} />
     <Stack.Screen name="bonding-tracker" component={BondingTrackerScreen} />
     <Stack.Screen name="bonding-timer" component={BondingTimerScreen} />
     <Stack.Screen name="bonding-guide" component={BondingGuideScreen} />
@@ -95,18 +94,18 @@ const MainStack = () => (
   </Stack.Navigator>
 );
 
-const AppNavigator = () => {
+const AppNavigator = (): JSX.Element => {
   const { isLoading, user } = useAuth();
 
   if (isLoading && user !== undefined) {
     return (
       <View style={styles.loadingContainer}>
         <Image
-          source={require('../../assets/icon.png')}
+          source={require('../../assets/images/icon.png')}
           style={styles.logo}
           contentFit="contain"
         />
-        <ActivityIndicator size="large" color={colors.primary.DEFAULT} style={styles.loader} />
+        <ActivityIndicator size="large" color={getColor.primary()} style={styles.loader} />
       </View>
     );
   }
@@ -126,7 +125,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background.DEFAULT,
+    backgroundColor: getColor.background(),
   },
   logo: {
     width: 200,

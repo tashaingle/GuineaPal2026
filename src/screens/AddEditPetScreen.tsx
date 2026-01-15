@@ -1,7 +1,8 @@
-import { GUINEA_PIG_BREEDS, GUINEA_PIG_NAMES } from '@/constants/breeds';
+import { GUINEA_PIG_BREEDS } from '@/constants/breeds';
 import { usePets } from '@/contexts/PetContext';
-import colors from '@/theme/colors';
+import { getColor } from '@/theme/colors';
 import { Gender, GuineaPig } from '@/types/guineaPig';
+import { showInterstitialAd } from '@/utils/ads';
 import { MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
@@ -9,22 +10,23 @@ import * as Crypto from 'expo-crypto';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    TextInput as RNTextInput,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  TextInput as RNTextInput,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useColorScheme,
 } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+// Pet type not needed - using GuineaPig
 
 const GENDER_OPTIONS: { label: string; value: Gender; icon: keyof typeof MaterialIcons.glyphMap }[] = [
   { label: 'Male', value: 'male', icon: 'person' },
@@ -32,45 +34,42 @@ const GENDER_OPTIONS: { label: string; value: Gender; icon: keyof typeof Materia
   { label: 'Unknown', value: 'unknown', icon: 'help' }
 ];
 
-const BACKGROUND_COLOR = '#FFF8E1';
-const WHITE = '#FFFFFF';
-const BORDER_COLOR = '#E0E0E0';
-
-const AddEditPetScreen = () => {
+const AddEditPetScreen = (): JSX.Element => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { pets, addPet, updatePet } = usePets();
-  const insets = useSafeAreaInsets();
 
   const [mode, setMode] = useState(params.mode as 'add' | 'edit');
   const [petId, setPetId] = useState(params.petId as string);
   const pet = mode === 'edit' ? pets.find(p => p.id === petId) : null;
 
   const [name, setName] = useState(params.name || pet?.name || '');
-  const [breed, setBreed] = useState(params.breed || pet?.breed || '');
+  const [selectedBreed, setSelectedBreed] = useState(params.breed || pet?.breed || '');
   const [birthDate, setBirthDate] = useState(params.birthDate || pet?.birthDate || '');
   const [weight, setWeight] = useState(params.weight || pet?.weight?.toString() || '');
-  const [gender, setGender] = useState<Gender>(() => {
-    if (params.gender && (params.gender === 'male' || params.gender === 'female' || params.gender === 'unknown')) {
-      return params.gender as Gender;
-    }
-    if (pet?.gender && (pet.gender === 'male' || pet.gender === 'female' || pet.gender === 'unknown')) {
-      return pet.gender;
-    }
-    return 'unknown';
-  });
-  const [isPregnant, setIsPregnant] = useState(params.isPregnant === 'true' || pet?.isPregnant || false);
-  const [pregnancyStartDate, setPregnancyStartDate] = useState(params.pregnancyStartDate || pet?.pregnancyStartDate || '');
+ const [gender, setGender] = useState<Gender>(() => {
+  const g = params.gender ?? pet?.gender;
+
+  if (g === 'male' || g === 'female' || g === 'unknown') {
+    return g as Gender;
+  }
+
+  return 'unknown';
+});
+
+  const [isPregnant, setIsPregnant] = useState(params.isPregnant === 'true' || (pet as GuineaPig)?.isPregnant || false);
+  const [pregnancyStartDate, setPregnancyStartDate] = useState(params.pregnancyStartDate || (pet as GuineaPig)?.pregnancyStartDate || '');
   const [image, setImage] = useState<string | undefined>(params.image || pet?.image || undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [datePickerMode, setDatePickerMode] = useState<'birthDate' | 'pregnancyDate'>('birthDate');
+  const closeDatePicker = () => setShowDatePicker(false);
   const [showGenderModal, setShowGenderModal] = useState(false);
-  const [selectedBreed, setSelectedBreed] = useState<string>('');
   const [showBreedModal, setShowBreedModal] = useState(false);
-  const [showPregnancyModal, setShowPregnancyModal] = useState(false);
-  const [showNameSuggestions, setShowNameSuggestions] = useState(false);
-  const [expectedDueDate, setExpectedDueDate] = useState<string>(pet?.expectedDueDate || '');
+  const [expectedDueDate, setExpectedDueDate] = useState<string>((pet as GuineaPig)?.expectedDueDate || '');
+  const [pregnancyNotes, setPregnancyNotes] = useState<string>((pet as GuineaPig)?.pregnancyNotes || '');
+const colorScheme = useColorScheme();
+const isDark = colorScheme === 'dark';
 
   const onComplete = params.onComplete ? JSON.parse(params.onComplete as string) as () => void : undefined;
 
@@ -90,36 +89,26 @@ const AddEditPetScreen = () => {
 
   useEffect(() => {
     if (selectedBreed) {
-      setBreed(selectedBreed);
+      setSelectedBreed(selectedBreed);
     }
   }, [selectedBreed]);
 
-  useEffect(() => {
-    if (params) {
-      if (params.name !== undefined) setName(params.name as string);
-      if (params.birthDate !== undefined) setBirthDate(params.birthDate as string);
-      if (params.weight !== undefined) setWeight(params.weight as string);
-      if (params.gender !== undefined) {
-        const genderValue = params.gender as Gender;
-        if (genderValue === 'male' || genderValue === 'female' || genderValue === 'unknown') {
-          setGender(genderValue);
-        }
-      }
-      if (params.isPregnant !== undefined) setIsPregnant(params.isPregnant === 'true');
-      if (params.pregnancyStartDate !== undefined) setPregnancyStartDate(params.pregnancyStartDate as string);
-      if (params.image !== undefined) setImage(params.image as string);
-      if (params.mode !== undefined) setMode(params.mode as 'add' | 'edit');
-      if (params.petId !== undefined) setPetId(params.petId as string);
-    }
-  }, [params]);
+useEffect(() => {
+  if (!params) return;
 
-  useEffect(() => {
-    if (params.gender && (params.gender === 'male' || params.gender === 'female' || params.gender === 'unknown')) {
-      setGender(params.gender as Gender);
-    }
-  }, [params.gender]);
+  if (params.name !== undefined) setName(params.name as string);
+  if (params.birthDate !== undefined) setBirthDate(params.birthDate as string);
+  if (params.weight !== undefined) setWeight(params.weight as string);
 
-  const handleImagePick = async () => {
+  if (params.gender !== undefined) {
+    const g = params.gender as Gender;
+    if (g === 'male' || g === 'female' || g === 'unknown') {
+      setGender(g);
+    }
+  }
+}, [params]);
+
+  const handleImagePick = async (): Promise<void> => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (status !== 'granted') {
@@ -142,7 +131,7 @@ const AddEditPetScreen = () => {
     }
   };
 
-  const handleDateChange = (event: any, selectedDate?: Date) => {
+  const handleDateChange = (event: unknown, selectedDate?: Date): void => {
     if (Platform.OS === 'android') {
       setShowDatePicker(false);
     }
@@ -157,20 +146,7 @@ const AddEditPetScreen = () => {
     }
   };
 
-  const handleBreedSelect = (breed: string) => {
-    setSelectedBreed(breed);
-    setShowBreedModal(false);
-  };
-
-  const handleGenderSelect = (selectedGender: Gender) => {
-    console.log('Selected gender:', selectedGender);
-    if (selectedGender === 'male' || selectedGender === 'female' || selectedGender === 'unknown') {
-      setGender(selectedGender);
-      setShowGenderModal(false);
-    }
-  };
-
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (!name.trim()) {
       Alert.alert('Error', 'Please enter a name for your guinea pig');
       return;
@@ -192,23 +168,41 @@ const AddEditPetScreen = () => {
         id: mode === 'edit' && petId ? petId : await Crypto.randomUUID(),
         name: name.trim(),
         breed: selectedBreed,
+        gender: gender,
         birthDate: birthDate || undefined,
         weight: weight ? parseFloat(weight) : undefined,
         image: image || undefined,
-        gender,
-        createdAt: mode === 'edit' && pet?.createdAt ? pet.createdAt : new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        isPregnant: isPregnant || false,
+        isPregnant: isPregnant,
         pregnancyStartDate: pregnancyStartDate || undefined,
         expectedDueDate: expectedDueDate || undefined,
+        pregnancyNotes: pregnancyNotes || undefined,
+        createdAt: mode === 'edit' && pet?.createdAt ? pet.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
-      console.log('Saving pet:', newPet);
-
       if (mode === 'edit' && petId) {
-        await updatePet(newPet);
+        await updatePet({
+          ...newPet,
+          species: 'guinea_pig',
+          color: 'Unknown',
+          isActive: true,
+          gender: gender === 'unknown' ? 'male' : gender,
+        });
       } else {
-        await addPet(newPet);
+        await addPet({
+          ...newPet,
+          species: 'guinea_pig',
+          color: 'Unknown',
+          isActive: true,
+          gender: gender === 'unknown' ? 'male' : gender,
+        });
+        // Show ad when adding a new pet
+        try {
+          await showInterstitialAd();
+        } catch (adError) {
+          console.warn('Failed to show interstitial ad:', adError);
+          // Don't fail the pet creation if ad fails
+        }
       }
 
       // Wait a moment to ensure the pet is saved
@@ -218,17 +212,17 @@ const AddEditPetScreen = () => {
         onComplete();
       }
 
-      // Navigate back to pet list
-      router.replace('/(stack)/pet-list');
+      // Navigate back to previous screen
+      router.back();
     } catch (error) {
-      console.error('Error saving pet:', error);
-      Alert.alert('Error', 'Failed to save pet. Please try again.');
+      console.error('Failed to save pet:', error);
+      Alert.alert('Error', `Failed to save pet: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (): Promise<void> => {
     if (!pet?.id) {
       Alert.alert('Error', 'Cannot delete pet: ID not found');
       return;
@@ -245,16 +239,12 @@ const AddEditPetScreen = () => {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: async () => {
+          onPress: async (): Promise<void> => {
             try {
               setIsLoading(true);
               await deletePet(pet.id);
-              if (onComplete) {
-                onComplete();
-              }
               router.back();
-            } catch (err) {
-              console.error('Failed to delete pet:', err);
+            } catch {
               Alert.alert('Error', 'Failed to delete pet. Please try again.');
             } finally {
               setIsLoading(false);
@@ -265,427 +255,329 @@ const AddEditPetScreen = () => {
     );
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+const renderDatePicker = (): JSX.Element => {
+  if (!showDatePicker) return <></>;
 
-  const renderDatePicker = () => {
-    if (!showDatePicker) return null;
+  const value =
+    datePickerMode === 'birthDate'
+      ? new Date(birthDate || Date.now())
+      : new Date(pregnancyStartDate || Date.now());
 
-    if (Platform.OS === 'ios') {
-      return (
-        <Modal
-          transparent={true}
-          animationType="slide"
-          visible={showDatePicker}
-          onRequestClose={() => setShowDatePicker(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <TouchableOpacity
-                  onPress={() => setShowDatePicker(false)}
-                  style={styles.modalButton}
-                >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setShowDatePicker(false)}
-                  style={styles.modalButton}
-                >
-                  <Text style={[styles.modalButtonText, { color: colors.primary.DEFAULT }]}>Done</Text>
-                </TouchableOpacity>
-              </View>
-              <DateTimePicker
-                value={datePickerMode === 'birthDate' ? new Date(birthDate || Date.now()) : new Date(pregnancyStartDate || Date.now())}
-                mode="date"
-                display="spinner"
-                onChange={handleDateChange}
-              />
-            </View>
-          </View>
-        </Modal>
-      );
-    }
-
+  // ANDROID
+  if (Platform.OS === 'android') {
     return (
-      <DateTimePicker
-        value={datePickerMode === 'birthDate' ? new Date(birthDate || Date.now()) : new Date(pregnancyStartDate || Date.now())}
-        mode="date"
-        display="default"
-        onChange={handleDateChange}
-      />
+ 
     );
-  };
+  }
 
-  const generateRandomName = () => {
-    const randomIndex = Math.floor(Math.random() * GUINEA_PIG_NAMES.length);
-    setName(GUINEA_PIG_NAMES[randomIndex]);
-  };
-
+  // IOS
   return (
-    <PaperProvider>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={[styles.container, { paddingTop: insets.top }]}
-      >
-        <ScrollView style={styles.scrollView}>
-          <View style={styles.content}>
-            <View style={styles.imageContainer}>
-              <TouchableOpacity onPress={handleImagePick} style={styles.imageButton}>
-                {image ? (
-                  <Image
-                    source={{ uri: image }}
-                    style={styles.petImage}
-                    contentFit="cover"
-                  />
-                ) : (
-                  <View style={styles.placeholderImage}>
-                    <MaterialIcons name="add-a-photo" size={32} color={colors.text.secondary} />
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
+    <Modal
+      visible
+      transparent
+      animationType="slide"
+      onRequestClose={closeDatePicker}
+    >
+      <View style={styles.dateModalOverlay}>
+        <View style={[styles.dateModalSheet, { backgroundColor: isDark ? '#111' : '#fff' }]}>
+          <View style={styles.dateModalHeader}>
+            <TouchableOpacity onPress={closeDatePicker}>
+              <Text style={[styles.dateModalButton, { color: isDark ? '#fff' : '#111' }]}>Cancel</Text>
+            </TouchableOpacity>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Name</Text>
-              <View style={styles.nameInputContainer}>
-                <RNTextInput
-                  style={[styles.input, { flex: 1 }]}
-                  value={name}
-                  onChangeText={setName}
-                  placeholder="Enter pet's name"
-                  placeholderTextColor={colors.text.secondary}
-                />
-                <TouchableOpacity 
-                  style={styles.sparkleButton}
-                  onPress={() => setShowNameSuggestions(!showNameSuggestions)}
-                >
-                  <MaterialIcons 
-                    name="auto-awesome" 
-                    size={24} 
-                    color={showNameSuggestions ? colors.primary.DEFAULT : colors.text.secondary} 
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
+            <TouchableOpacity onPress={closeDatePicker}>
+              <Text style={[styles.dateModalButton, styles.dateModalButtonDone, { color: isDark ? '#4da3ff' : getColor.primary() }]}>
+  Done
+</Text>
+            </TouchableOpacity>
+          </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Breed</Text>
-              <TouchableOpacity
-                onPress={() => setShowBreedModal(true)}
-                style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
-              >
-                <Text style={styles.inputText}>
-                  {selectedBreed || 'Select breed'}
-                </Text>
-                <MaterialIcons name="arrow-drop-down" size={24} color={colors.text.primary} />
-              </TouchableOpacity>
-            </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Gender</Text>
-              <TouchableOpacity
-                onPress={() => setShowGenderModal(true)}
-                style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
-              >
-                <Text style={styles.inputText}>
-                  {GENDER_OPTIONS.find(option => option.value === gender)?.label || 'Select gender'}
-                </Text>
-                <MaterialIcons name="arrow-drop-down" size={24} color={colors.text.primary} />
-              </TouchableOpacity>
-            </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Birth Date</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setDatePickerMode('birthDate');
-                  setShowDatePicker(true);
-                }}
-                style={styles.input}
-              >
-                <Text style={styles.inputText}>
-                  {birthDate ? formatDate(birthDate) : 'Select birth date'}
-                </Text>
-              </TouchableOpacity>
-            </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Weight (g)</Text>
-              <RNTextInput
-                value={weight}
-                onChangeText={setWeight}
-                style={[styles.input, { height: 50 }]}
-                placeholder="Enter weight in grams"
-                keyboardType="numeric"
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+
+
+  const renderContent = (): JSX.Element => (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <ScrollView style={styles.content}>
+        <View style={styles.imageContainer}>
+          <TouchableOpacity onPress={handleImagePick} style={styles.imageWrapper}>
+            {image ? (
+              <Image
+                source={{ uri: image }}
+                style={styles.image}
+                contentFit="cover"
               />
-            </View>
+            ) : (
+              <View style={styles.placeholderContainer}>
+                <MaterialIcons name="add-a-photo" size={32} color={getColor.textLight()} />
+                <Text style={styles.placeholderText}>Add Photo</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Pregnancy Status</Text>
+        <View style={styles.formContainer}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Name</Text>
+            <RNTextInput
+              style={[styles.input, { backgroundColor: getColor.inputBackground() }]}
+              value={name}
+              onChangeText={setName}
+              placeholder="Enter pet's name"
+              placeholderTextColor={getColor.inputPlaceholder()}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Breed</Text>
+            <TouchableOpacity
+              style={styles.selectButton}
+              onPress={() => setShowBreedModal(true)}
+            >
+              <Text style={styles.selectButtonText}>
+                {selectedBreed || 'Select breed'}
+              </Text>
+              <MaterialIcons name="arrow-drop-down" size={24} color={getColor.text()} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Gender</Text>
+            <TouchableOpacity
+              style={styles.selectButton}
+              onPress={() => setShowGenderModal(true)}
+            >
+              <Text style={styles.selectButtonText}>
+                {GENDER_OPTIONS.find(option => option.value === gender)?.label || 'Select gender'}
+              </Text>
+              <MaterialIcons name="arrow-drop-down" size={24} color={getColor.text()} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Birth Date</Text>
+            <TouchableOpacity
+              style={styles.selectButton}
+              onPress={() => {
+                setDatePickerMode('birthDate');
+                setShowDatePicker(true);
+              }}
+            >
+              <Text style={styles.selectButtonText}>
+                {birthDate || 'Select birth date'}
+              </Text>
+              <MaterialIcons name="calendar-today" size={24} color={getColor.text()} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Weight (g)</Text>
+            <RNTextInput
+              style={[styles.input, { backgroundColor: getColor.inputBackground() }]}
+              value={weight}
+              onChangeText={setWeight}
+              placeholder="Enter weight"
+              keyboardType="numeric"
+              placeholderTextColor={getColor.inputPlaceholder()}
+            />
+          </View>
+
+          {gender === 'female' && (
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Pregnancy Status</Text>
               <TouchableOpacity
-                onPress={() => setShowPregnancyModal(true)}
-                style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+                style={styles.selectButton}
+                onPress={() => setIsPregnant(!isPregnant)}
               >
-                <Text style={styles.inputText}>
+                <Text style={styles.selectButtonText}>
                   {isPregnant ? 'Pregnant' : 'Not Pregnant'}
                 </Text>
-                <MaterialIcons name="arrow-drop-down" size={24} color={colors.text.primary} />
+                <MaterialIcons
+                  name={isPregnant ? 'check-circle' : 'radio-button-unchecked'}
+                  size={24}
+                  color={getColor.text()}
+                />
               </TouchableOpacity>
             </View>
+          )}
 
-            {isPregnant && (
-              <>
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Pregnancy Start Date</Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setDatePickerMode('pregnancyDate');
-                      setShowDatePicker(true);
-                    }}
-                    style={styles.input}
-                  >
-                    <Text style={styles.inputText}>
-                      {pregnancyStartDate ? formatDate(pregnancyStartDate) : 'Select start date'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Expected Due Date</Text>
-                  <View style={styles.input}>
-                    <Text style={styles.inputText}>
-                      {expectedDueDate ? formatDate(expectedDueDate) : 'Calculated after setting start date'}
-                    </Text>
-                  </View>
-                </View>
-              </>
-            )}
-
-            <View style={styles.buttonContainer}>
+          {isPregnant && (
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Pregnancy Start Date</Text>
               <TouchableOpacity
-                style={[styles.button, { backgroundColor: colors.primary.DEFAULT }]}
-                onPress={handleSave}
-                disabled={isLoading}
+                style={styles.selectButton}
+                onPress={() => {
+                  setDatePickerMode('pregnancyDate');
+                  setShowDatePicker(true);
+                }}
               >
-                {isLoading ? (
-                  <ActivityIndicator color={colors.white} />
-                ) : (
-                  <Text style={styles.buttonText}>Save</Text>
-                )}
+                <Text style={styles.selectButtonText}>
+                  {pregnancyStartDate || 'Select start date'}
+                </Text>
+                <MaterialIcons name="calendar-today" size={24} color={getColor.text()} />
               </TouchableOpacity>
             </View>
-          </View>
-        </ScrollView>
+          )}
 
-        <Modal
-          transparent={true}
-          animationType="slide"
-          visible={showGenderModal}
-          onRequestClose={() => setShowGenderModal(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <TouchableOpacity
-                  onPress={() => setShowGenderModal(false)}
-                  style={styles.modalButton}
-                >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <Text style={styles.modalTitle}>Select Gender</Text>
-                <TouchableOpacity
-                  onPress={() => setShowGenderModal(false)}
-                  style={styles.modalButton}
-                >
-                  <Text style={[styles.modalButtonText, { color: colors.primary.DEFAULT }]}>Done</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.modalOptions}>
-                {GENDER_OPTIONS.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.modalOption,
-                      gender === option.value && styles.modalOptionSelected
-                    ]}
-                    onPress={() => handleGenderSelect(option.value)}
-                  >
-                    <MaterialIcons
-                      name={option.icon}
-                      size={24}
-                      color={gender === option.value ? colors.white : colors.text.primary}
-                    />
-                    <Text
-                      style={[
-                        styles.modalOptionText,
-                        gender === option.value && styles.modalOptionTextSelected
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+          {isPregnant && pregnancyStartDate && (
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Expected Due Date</Text>
+              <Text style={styles.dueDateText}>{expectedDueDate}</Text>
             </View>
-          </View>
-        </Modal>
+          )}
 
-        <Modal
-          transparent={true}
-          animationType="slide"
-          visible={showPregnancyModal}
-          onRequestClose={() => setShowPregnancyModal(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <TouchableOpacity
-                  onPress={() => setShowPregnancyModal(false)}
-                  style={styles.modalButton}
-                >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <Text style={styles.modalTitle}>Pregnancy Status</Text>
-                <TouchableOpacity
-                  onPress={() => setShowPregnancyModal(false)}
-                  style={styles.modalButton}
-                >
-                  <Text style={[styles.modalButtonText, { color: colors.primary.DEFAULT }]}>Done</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.modalOptions}>
-                <TouchableOpacity
-                  style={[
-                    styles.modalOption,
-                    isPregnant && styles.modalOptionSelected
-                  ]}
-                  onPress={() => {
-                    setIsPregnant(true);
-                    setShowPregnancyModal(false);
-                  }}
-                >
-                  <MaterialIcons
-                    name="pregnant-woman"
-                    size={24}
-                    color={isPregnant ? colors.white : colors.text.primary}
-                  />
-                  <Text
-                    style={[
-                      styles.modalOptionText,
-                      isPregnant && styles.modalOptionTextSelected
-                    ]}
-                  >
-                    Pregnant
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.modalOption,
-                    !isPregnant && styles.modalOptionSelected
-                  ]}
-                  onPress={() => {
-                    setIsPregnant(false);
-                    setPregnancyStartDate('');
-                    setShowPregnancyModal(false);
-                  }}
-                >
-                  <MaterialIcons
-                    name="not-interested"
-                    size={24}
-                    color={!isPregnant ? colors.white : colors.text.primary}
-                  />
-                  <Text
-                    style={[
-                      styles.modalOptionText,
-                      !isPregnant && styles.modalOptionTextSelected
-                    ]}
-                  >
-                    Not Pregnant
-                  </Text>
-                </TouchableOpacity>
-              </View>
+          {isPregnant && (
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Pregnancy Notes</Text>
+              <RNTextInput
+                style={[styles.input, { backgroundColor: getColor.inputBackground() }]}
+                value={pregnancyNotes}
+                onChangeText={setPregnancyNotes}
+                placeholder="Enter pregnancy notes"
+                placeholderTextColor={getColor.inputPlaceholder()}
+              />
             </View>
-          </View>
-        </Modal>
+          )}
+        </View>
+      </ScrollView>
 
-        {showDatePicker && renderDatePicker()}
-
-        {showBreedModal && (
-          <Modal
-            visible={showBreedModal}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={() => setShowBreedModal(false)}
+      <View style={styles.footer}>
+        {mode === 'edit' && (
+          <TouchableOpacity
+            style={[styles.button, styles.deleteButton]}
+            onPress={handleDelete}
+            disabled={isLoading}
           >
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Select Breed</Text>
-                  <TouchableOpacity
-                    onPress={() => setShowBreedModal(false)}
-                    style={styles.closeButton}
-                  >
-                    <MaterialIcons name="close" size={24} color={colors.text.primary} />
-                  </TouchableOpacity>
-                </View>
-                <ScrollView style={styles.breedList}>
-                  {GUINEA_PIG_BREEDS.map((breed) => (
-                    <TouchableOpacity
-                      key={breed}
-                      style={[
-                        styles.breedItem,
-                        selectedBreed === breed && styles.selectedBreed
-                      ]}
-                      onPress={() => handleBreedSelect(breed)}
-                    >
-                      <Text style={[
-                        styles.breedText,
-                        selectedBreed === breed && styles.selectedBreedText
-                      ]}>
-                        {breed}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            </View>
-          </Modal>
+            <Text style={styles.deleteButtonText}>Delete Pet</Text>
+          </TouchableOpacity>
         )}
+        <TouchableOpacity
+          style={[styles.button, styles.saveButton]}
+          onPress={handleSave}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color={getColor.background()} />
+          ) : (
+            <Text style={styles.saveButtonText}>
+              {mode === 'edit' ? 'Save Changes' : 'Add Pet'}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
 
-        {showNameSuggestions && (
-          <View style={styles.nameSuggestionsContainer}>
-            <TouchableOpacity 
-              style={styles.generateButton}
-              onPress={generateRandomName}
-            >
-              <Text style={styles.generateButtonText}>Generate Random Name</Text>
-            </TouchableOpacity>
-            <Text style={styles.suggestionsTitle}>Name Suggestions:</Text>
-            <View style={styles.suggestionsList}>
-              {GUINEA_PIG_NAMES.slice(0, 5).map((suggestion, index) => (
+      {renderDatePicker()}
+
+      <Modal
+        visible={showGenderModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowGenderModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Gender</Text>
+              <TouchableOpacity
+                onPress={() => setShowGenderModal(false)}
+                style={styles.closeButton}
+              >
+                <MaterialIcons name="close" size={24} color={getColor.text()} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalOptions}>
+              {GENDER_OPTIONS.map(option => (
                 <TouchableOpacity
-                  key={index}
-                  style={styles.suggestionItem}
+                  key={option.value}
+                  style={[
+                    styles.modalOption,
+                    gender === option.value && styles.modalOptionSelected
+                  ]}
                   onPress={() => {
-                    setName(suggestion);
-                    setShowNameSuggestions(false);
+                    setGender(option.value);
+                    setShowGenderModal(false);
                   }}
                 >
-                  <Text style={styles.suggestionText}>{suggestion}</Text>
+                  <MaterialIcons
+                    name={option.icon}
+                    size={24}
+                    color={gender === option.value ? getColor.background() : getColor.text()}
+                  />
+                  <Text
+                    style={[
+                      styles.modalOptionText,
+                      gender === option.value && styles.modalOptionTextSelected
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
-        )}
-      </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showBreedModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowBreedModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Breed</Text>
+              <TouchableOpacity
+                onPress={() => setShowBreedModal(false)}
+                style={styles.closeButton}
+              >
+                <MaterialIcons name="close" size={24} color={getColor.text()} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.breedList}>
+              {GUINEA_PIG_BREEDS.map(breed => (
+                <TouchableOpacity
+                  key={breed}
+                  style={[
+                    styles.breedItem,
+                    selectedBreed === breed && styles.selectedBreed
+                  ]}
+                  onPress={() => {
+                    setSelectedBreed(breed);
+                    setShowBreedModal(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.breedText,
+                      selectedBreed === breed && styles.selectedBreedText
+                    ]}
+                  >
+                    {breed}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </KeyboardAvoidingView>
+  );
+
+  return (
+    <PaperProvider>
+      {renderContent()}
     </PaperProvider>
   );
 };
@@ -693,86 +585,124 @@ const AddEditPetScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.DEFAULT,
-  },
-  scrollView: {
-    flex: 1,
+    backgroundColor: getColor.backgroundLight(),
   },
   content: {
-    padding: 16,
+    flex: 1,
   },
   imageContainer: {
     alignItems: 'center',
-    marginBottom: 24,
+    padding: 16,
   },
-  imageButton: {
+  imageWrapper: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: colors.background.card,
+    overflow: 'hidden',
+    backgroundColor: getColor.cardBackground(),
+    borderWidth: 2,
+    borderColor: getColor.border(),
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  placeholderContainer: {
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: getColor.backgroundLight(),
   },
-  petImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+  placeholderText: {
+    marginTop: 8,
+    color: getColor.textLight(),
+    fontSize: 14,
   },
-  placeholderImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.background.card,
-    justifyContent: 'center',
-    alignItems: 'center',
+  formContainer: {
+    padding: 16,
   },
-  section: {
+  inputGroup: {
     marginBottom: 16,
   },
-  sectionTitle: {
+  label: {
     fontSize: 16,
     fontWeight: '600',
+    color: getColor.text(),
     marginBottom: 8,
-    color: colors.text.primary,
   },
   input: {
-    backgroundColor: colors.background.card,
+    backgroundColor: getColor.inputBackground(),
     borderRadius: 8,
     padding: 12,
-    fontSize: 16,
-    color: colors.text.primary,
+    color: getColor.text(),
     borderWidth: 1,
-    borderColor: BORDER_COLOR,
+    borderColor: getColor.border(),
   },
-  inputText: {
+  selectButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: getColor.cardBackground(),
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: getColor.border(),
+  },
+  selectButtonText: {
+    color: getColor.text(),
     fontSize: 16,
-    color: colors.text.primary,
   },
-  buttonContainer: {
-    marginTop: 24,
-    marginBottom: 32,
+  dueDateText: {
+    color: getColor.text(),
+    fontSize: 16,
+    padding: 12,
+    backgroundColor: getColor.cardBackground(),
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: getColor.border(),
+  },
+  footer: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: getColor.border(),
+    backgroundColor: getColor.cardBackground(),
   },
   button: {
-    height: 50,
+    padding: 16,
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  saveButton: {
+    backgroundColor: getColor.primary(),
+  },
+  saveButtonText: {
+    color: getColor.background(),
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    backgroundColor: getColor.error(),
+  },
+  deleteButtonText: {
+    color: getColor.background(),
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: getColor.overlay(),
     justifyContent: 'center',
     alignItems: 'center',
   },
-  buttonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
   modalContent: {
-    backgroundColor: colors.background.card,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingBottom: 32,
+    backgroundColor: getColor.cardBackground(),
+    borderRadius: 12,
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -780,19 +710,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: BORDER_COLOR,
+    borderBottomColor: getColor.border(),
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.text.primary,
+    color: getColor.text(),
   },
-  modalButton: {
-    padding: 8,
-  },
-  modalButtonText: {
-    fontSize: 16,
-    color: colors.text.secondary,
+  closeButton: {
+    padding: 4,
   },
   modalOptions: {
     padding: 16,
@@ -800,84 +726,71 @@ const styles = StyleSheet.create({
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: BORDER_COLOR,
-    backgroundColor: colors.white,
-    marginBottom: 8,
+    padding: 12,
     borderRadius: 8,
+    marginBottom: 8,
   },
   modalOptionSelected: {
-    backgroundColor: colors.primary.DEFAULT,
+    backgroundColor: getColor.primary(),
   },
   modalOptionText: {
-    fontSize: 16,
     marginLeft: 12,
-    color: colors.text.primary,
+    fontSize: 16,
+    color: getColor.text(),
   },
   modalOptionTextSelected: {
-    color: colors.white,
+    color: getColor.background(),
   },
   breedList: {
-    padding: 16,
+    maxHeight: 400,
   },
   breedItem: {
-    padding: 16,
+    padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: BORDER_COLOR,
+    borderBottomColor: getColor.border(),
   },
   selectedBreed: {
-    backgroundColor: colors.primary.DEFAULT,
+    backgroundColor: getColor.backgroundLight(),
   },
   selectedBreedText: {
-    color: colors.white,
+    color: getColor.primary(),
+    fontWeight: '600',
   },
   breedText: {
     fontSize: 16,
-    color: colors.text.primary,
+    color: getColor.text(),
   },
-  closeButton: {
-    padding: 8,
+
+
+
+
+  dateModalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
-  nameSuggestionsContainer: {
-    padding: 16,
-  },
-  generateButton: {
-    backgroundColor: colors.primary.DEFAULT,
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  generateButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  suggestionsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: colors.text.primary,
-  },
-  suggestionsList: {
-    padding: 16,
-  },
-  suggestionItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: BORDER_COLOR,
-  },
-  suggestionText: {
-    fontSize: 16,
-    color: colors.text.primary,
-  },
-  nameInputContainer: {
+dateModalSheet: {
+  borderTopLeftRadius: 12,
+  borderTopRightRadius: 12,
+  paddingBottom: 24,
+},
+
+
+  dateModalHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: getColor.border(),
   },
-  sparkleButton: {
-    padding: 8,
+  dateModalButton: {
+    fontSize: 16,
+    color: getColor.text(),
+  },
+  dateModalButtonDone: {
+    fontWeight: '600',
+    color: getColor.primary(),
   },
 });
 

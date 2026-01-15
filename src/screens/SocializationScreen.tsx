@@ -1,4 +1,2 @@
-import { RootStackParamList } from '@/types/navigation';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-
-type Props = NativeStackScreenProps<RootStackParamList, 'care-guide'>; 
+// This file is a placeholder for the SocializationScreen component
+// TODO: Implement socialization screen functionality 

@@ -1,5 +1,6 @@
-import colors from '@/theme/colors';
+import { getColor } from '@/theme/colors';
 import { GuineaPig } from '@/types/guineaPig';
+// Pet type not needed - using GuineaPig
 import { loadPets } from '@/utils/storage';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -32,7 +33,6 @@ interface BondingSession {
     success?: 'positive' | 'neutral' | 'negative';
 }
 
-const COMMON_BEHAVIORS: Behavior[] = ['playing', 'grooming', 'cuddling', 'fighting', 'ignoring'];
 const BEHAVIOR_EMOJIS: Record<Behavior, string> = {
     playing: '🎾',
     grooming: '🪮',
@@ -41,7 +41,6 @@ const BEHAVIOR_EMOJIS: Record<Behavior, string> = {
     ignoring: '😴'
 };
 
-const LOCATIONS: Location[] = ['floor', 'cage', 'playpen', 'outside'];
 const LOCATION_EMOJIS: Record<Location, string> = {
     floor: '🏠',
     cage: '🏡',
@@ -49,7 +48,7 @@ const LOCATION_EMOJIS: Record<Location, string> = {
     outside: '🌳'
 };
 
-const BondingTrackerScreen = () => {
+const BondingTrackerScreen: React.FC = (): JSX.Element => {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const [sessions, setSessions] = useState<BondingSession[]>([]);
@@ -61,16 +60,14 @@ const BondingTrackerScreen = () => {
         loadData();
     }, []);
 
-    const loadData = async () => {
+    const loadData = async (): Promise<void> => {
         try {
             setIsLoading(true);
             const savedPets = await loadPets();
-            setPets(savedPets);
+            setPets(savedPets as GuineaPig[]);
 
             const savedSessions = await AsyncStorage.getItem('bondingSessions');
-            console.log('Raw saved sessions:', savedSessions); // Debug log
             const allSessions: BondingSession[] = savedSessions ? JSON.parse(savedSessions) : [];
-            console.log('Parsed sessions:', allSessions); // Debug log
             
             const sortedSessions = allSessions.sort((a, b) => 
                 new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -85,18 +82,18 @@ const BondingTrackerScreen = () => {
         }
     };
 
-    const getPetNames = (petIds: string[]) => {
+    const getPetNames = (petIds: string[]): string => {
         return petIds
             .map(id => pets.find(pet => pet.id === id)?.name)
             .filter(Boolean)
             .join(' & ');
     };
 
-    const getPetPairKey = (petIds: string[]) => {
+    const getPetPairKey = (petIds: string[]): string => {
         return petIds.sort().join('-');
     };
 
-    const groupSessionsByPetPair = () => {
+    const groupSessionsByPetPair = (): Record<string, BondingSession[]> => {
         const groupedSessions: Record<string, BondingSession[]> = {};
         
         sessions.forEach(session => {
@@ -110,13 +107,13 @@ const BondingTrackerScreen = () => {
         return groupedSessions;
     };
 
-    const formatDuration = (seconds: number) => {
+    const formatDuration = (seconds: number): string => {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
         return `${hours}h ${minutes}m`;
     };
 
-    const formatDate = (dateString: string) => {
+    const formatDate = (dateString: string): string => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
@@ -127,7 +124,7 @@ const BondingTrackerScreen = () => {
         });
     };
 
-    const renderSession = (session: BondingSession) => {
+    const renderSession = (session: BondingSession): JSX.Element => {
         return (
             <View key={session.id} style={styles.sessionCard}>
                 <View style={styles.sessionHeader}>
@@ -137,15 +134,15 @@ const BondingTrackerScreen = () => {
                 
                 <View style={styles.sessionDetails}>
                     <View style={styles.detailRow}>
-                        <MaterialIcons name="place" size={20} color={colors.text.secondary} />
+                        <MaterialIcons name="place" size={20} color={getColor.textLight()} />
                         <Text style={styles.detailText}>
                             {LOCATION_EMOJIS[session.location]} {session.location}
                         </Text>
                     </View>
                     
-                    {session.behaviors.length > 0 && (
+                    {(session.behaviors?.length ?? 0) > 0 && (
                         <View style={styles.detailRow}>
-                            <MaterialIcons name="pets" size={20} color={colors.text.secondary} />
+                            <MaterialIcons name="pets" size={20} color={getColor.textLight()} />
                             <Text style={styles.detailText}>
                                 {session.behaviors.map(b => BEHAVIOR_EMOJIS[b]).join(' ')}
                             </Text>
@@ -154,7 +151,7 @@ const BondingTrackerScreen = () => {
                     
                     {session.notes && (
                         <View style={styles.detailRow}>
-                            <MaterialIcons name="note" size={20} color={colors.text.secondary} />
+                            <MaterialIcons name="note" size={20} color={getColor.textLight()} />
                             <Text style={styles.detailText}>{session.notes}</Text>
                         </View>
                     )}
@@ -163,7 +160,7 @@ const BondingTrackerScreen = () => {
         );
     };
 
-    const renderPetPair = (pairKey: string, pairSessions: BondingSession[]) => {
+    const renderPetPair = (pairKey: string, pairSessions: BondingSession[]): JSX.Element => {
         const petNames = getPetNames(pairSessions[0].pets);
         const isExpanded = expandedPair === pairKey;
         const totalSessions = pairSessions.length;
@@ -184,7 +181,7 @@ const BondingTrackerScreen = () => {
                     <MaterialIcons
                         name={isExpanded ? "expand-less" : "expand-more"}
                         size={24}
-                        color={colors.text.primary}
+                        color={getColor.text()}
                     />
                 </TouchableOpacity>
 
@@ -200,7 +197,7 @@ const BondingTrackerScreen = () => {
     if (isLoading) {
         return (
             <View style={[styles.container, styles.centered]}>
-                <ActivityIndicator size="large" color={colors.primary.DEFAULT} />
+                <ActivityIndicator size="large" color={getColor.primary()} />
             </View>
         );
     }
@@ -214,14 +211,14 @@ const BondingTrackerScreen = () => {
                     style={styles.backButton}
                     onPress={() => router.back()}
                 >
-                    <MaterialIcons name="arrow-back" size={24} color={colors.primary.DEFAULT} />
+                    <MaterialIcons name="arrow-back" size={24} color={getColor.primary()} />
                 </TouchableOpacity>
                 <Text style={styles.title}>Bonding Log</Text>
                 <TouchableOpacity
                     style={styles.newSessionButton}
                     onPress={() => router.push('/(stack)/bonding-timer')}
                 >
-                    <MaterialIcons name="add" size={24} color={colors.primary.DEFAULT} />
+                    <MaterialIcons name="add" size={24} color={getColor.primary()} />
                 </TouchableOpacity>
             </View>
 
@@ -237,7 +234,7 @@ const BondingTrackerScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.DEFAULT,
+        backgroundColor: getColor.backgroundLight(),
     },
     centered: {
         justifyContent: 'center',
@@ -249,8 +246,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: colors.border.DEFAULT,
-        backgroundColor: colors.background.card,
+        borderBottomColor: getColor.border(),
+        backgroundColor: getColor.white(),
     },
     backButton: {
         padding: 8,
@@ -259,7 +256,7 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 18,
         fontWeight: '600',
-        color: colors.text.primary,
+        color: getColor.text(),
     },
     newSessionButton: {
         padding: 8,
@@ -271,7 +268,7 @@ const styles = StyleSheet.create({
     },
     pairContainer: {
         marginBottom: 16,
-        backgroundColor: colors.background.card,
+        backgroundColor: getColor.white(),
         borderRadius: 12,
         overflow: 'hidden',
     },
@@ -280,7 +277,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: 16,
-        backgroundColor: colors.background.card,
+        backgroundColor: getColor.white(),
     },
     pairInfo: {
         flex: 1,
@@ -288,19 +285,19 @@ const styles = StyleSheet.create({
     pairTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: colors.text.primary,
+        color: getColor.text(),
         marginBottom: 4,
     },
     pairStats: {
         fontSize: 14,
-        color: colors.text.secondary,
+        color: getColor.textLight(),
     },
     sessionsList: {
         padding: 16,
-        backgroundColor: colors.background.DEFAULT,
+        backgroundColor: getColor.background(),
     },
     sessionCard: {
-        backgroundColor: colors.background.card,
+        backgroundColor: getColor.white(),
         borderRadius: 8,
         padding: 12,
         marginBottom: 8,
@@ -312,12 +309,12 @@ const styles = StyleSheet.create({
     },
     sessionDate: {
         fontSize: 14,
-        color: colors.text.primary,
+        color: getColor.text(),
         fontWeight: '500',
     },
     sessionDuration: {
         fontSize: 14,
-        color: colors.text.secondary,
+        color: getColor.textLight(),
     },
     sessionDetails: {
         gap: 8,
@@ -329,7 +326,7 @@ const styles = StyleSheet.create({
     },
     detailText: {
         fontSize: 14,
-        color: colors.text.secondary,
+        color: getColor.textLight(),
         flex: 1,
     },
 });

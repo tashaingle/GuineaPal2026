@@ -1,12 +1,14 @@
-import { useRouter } from 'expo-router/build/hooks';
-import { useEffect } from 'react';
+import { Stack } from 'expo-router/stack';
+import React from 'react';
 
-export default function Index() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace('/(stack)/pet-list');
-  }, [router]);
-
-  return null;
+export default function Index(): JSX.Element {
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          headerShown: false,
+        }}
+      />
+    </>
+  );
 } 

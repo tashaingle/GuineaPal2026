@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { getColor } from '@/theme/colors';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -17,14 +18,13 @@ interface Props {
   router: ReturnType<typeof useRouter>;
 }
 
-const LoginScreen = ({ router }: Props) => {
+const LoginScreen: React.FC<Props> = ({ router }) => {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = async () => {
+  const handleLogin = async (): Promise<void> => {
     if (!email.trim() || !password.trim()) {
       Alert.alert('Error', 'Please enter both email and password');
       return;
@@ -40,7 +40,7 @@ const LoginScreen = ({ router }: Props) => {
     }
   };
 
-  const handleTestAccountLogin = async () => {
+  const handleTestAccountLogin = async (): Promise<void> => {
     try {
       setIsLoading(true);
       await login({
@@ -59,7 +59,7 @@ const LoginScreen = ({ router }: Props) => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <Image
-            source={require('../../../assets/icon.png')}
+            source={require('../../../assets/images/icon.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -87,7 +87,7 @@ const LoginScreen = ({ router }: Props) => {
             loading={isLoading}
             disabled={isLoading}
           >
-            Login
+            <Text>Login</Text>
           </Button>
           <Button
             mode="outlined"
@@ -96,7 +96,7 @@ const LoginScreen = ({ router }: Props) => {
             loading={isLoading}
             disabled={isLoading}
           >
-            Use Test Account
+            <Text>Use Test Account</Text>
           </Button>
           <View style={styles.registerPrompt}>
             <Text style={styles.registerPromptText}>New to GuineaPal? </Text>
@@ -113,7 +113,7 @@ const LoginScreen = ({ router }: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF8E1',
+    backgroundColor: getColor.background(),
   },
   scrollContent: {
     flexGrow: 1,
@@ -131,18 +131,18 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 16,
-    backgroundColor: 'white',
+    backgroundColor: getColor.background(),
     width: '100%',
   },
   button: {
     marginTop: 16,
-    backgroundColor: '#5D4037',
+    backgroundColor: getColor.primary(),
     width: '100%',
   },
   testAccountButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: getColor.transparent(),
     borderWidth: 2,
-    borderColor: '#5D4037',
+    borderColor: getColor.primary(),
     borderRadius: 8,
   },
   registerPrompt: {
@@ -151,11 +151,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   registerPromptText: {
-    color: '#5D4037',
+    color: getColor.text(),
     fontSize: 16,
   },
   registerLink: {
-    color: '#5D4037',
+    color: getColor.text(),
     fontSize: 16,
     fontWeight: 'bold',
     textDecorationLine: 'underline',

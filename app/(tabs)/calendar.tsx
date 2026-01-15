@@ -1,15 +1,14 @@
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import React from 'react';
-import { StyleSheet } from 'react-native';
+import { getColor } from '@/theme/colors';
+import { StyleSheet, Text } from 'react-native';
 
-export default function CalendarScreen() {
+export default function CalendarScreen(): React.JSX.Element {
   return (
     <ErrorBoundary>
-      <ThemedView style={styles.container}>
-        <ThemedText style={styles.title}>Calendar</ThemedText>
-        <ThemedText style={styles.subtitle}>Coming soon!</ThemedText>
+      <ThemedView style={[styles.container, { backgroundColor: getColor.backgroundLight() }]}>
+        <Text style={styles.title}>Calendar</Text>
+        <Text style={styles.subtitle}>Coming soon!</Text>
       </ThemedView>
     </ErrorBoundary>
   );
@@ -18,7 +17,6 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -29,6 +27,5 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
   },
 }); 

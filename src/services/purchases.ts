@@ -1,54 +1,52 @@
 import { Platform } from 'react-native';
 import * as InAppPurchases from 'react-native-iap';
+// PurchaseOptions type not needed
 
-// Product IDs
+// Product IDs - using the correct bundle identifier
 const PREMIUM_PRODUCT_ID = Platform.select({
-  android: 'com.tasha.guineapal.premium',
-  ios: 'com.tasha.guineapal.premium',
-}) || 'com.tasha.guineapal.premium'; // Fallback to Android ID
+  android: 'com.guineapal.app.premium',
+  ios: 'com.guineapal.app.premium',
+}) || 'com.guineapal.app.premium'; // Fallback to Android ID
 
 // Initialize IAP
-export const initializePurchases = async () => {
+export const initializePurchases = async (): Promise<void> => {
   try {
     await InAppPurchases.initConnection();
     if (Platform.OS === 'android') {
       await InAppPurchases.flushFailedPurchasesCachedAsPendingAndroid();
     }
-  } catch (error) {
-    console.error('Failed to initialize purchases:', error);
-    throw error;
+  } catch {
+    throw new Error('Failed to initialize purchases');
   }
 };
 
 // Get available products
-export const getProducts = async () => {
+export const getProducts = async (): Promise<InAppPurchases.Product[]> => {
   try {
     const products = await InAppPurchases.getProducts({
       skus: [PREMIUM_PRODUCT_ID],
     });
     return products;
-  } catch (error) {
-    console.error('Failed to get products:', error);
-    throw error;
+  } catch {
+    throw new Error('Failed to get products');
   }
 };
 
 // Purchase premium
-export const purchasePremium = async () => {
+export const purchasePremium = async (): Promise<InAppPurchases.Purchase> => {
   try {
     const purchase = await InAppPurchases.requestPurchase({
       sku: PREMIUM_PRODUCT_ID,
       andDangerouslyFinishTransactionAutomaticallyIOS: false,
     });
     return purchase;
-  } catch (error) {
-    console.error('Failed to purchase premium:', error);
-    throw error;
+  } catch {
+    throw new Error('Failed to purchase premium');
   }
 };
 
 // Restore purchases
-export const restorePurchases = async () => {
+export const restorePurchases = async (): Promise<InAppPurchases.Purchase[]> => {
   try {
     if (Platform.OS === 'ios') {
       const purchases = await InAppPurchases.getAvailablePurchases();
@@ -57,17 +55,32 @@ export const restorePurchases = async () => {
       const purchases = await InAppPurchases.getAvailablePurchases();
       return purchases;
     }
-  } catch (error) {
-    console.error('Failed to restore purchases:', error);
-    throw error;
+  } catch {
+    throw new Error('Failed to restore purchases');
   }
 };
 
 // End connection when app is closed
-export const endConnection = async () => {
+export const endConnection = async (): Promise<void> => {
   try {
     await InAppPurchases.endConnection();
-  } catch (error) {
-    console.error('Failed to end connection:', error);
+  } catch {
+    throw new Error('Failed to end connection');
+  }
+};
+
+export const purchaseProduct = async (productId: string): Promise<void> => {
+  try {
+    await InAppPurchases.requestPurchase({ sku: productId });
+  } catch {
+    throw new Error('Failed to purchase product');
+  }
+};
+
+export const finishTransaction = async (transaction: InAppPurchases.Purchase): Promise<void> => {
+  try {
+    await InAppPurchases.finishTransaction(transaction);
+  } catch {
+    throw new Error('Failed to finish transaction');
   }
 }; 

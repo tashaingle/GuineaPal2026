@@ -1,9 +1,10 @@
+import { getColor } from '@/theme/colors';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const CareScheduleScreen = () => {
+const CareScheduleScreen: React.FC = () => {
   const params = useLocalSearchParams();
   const { petId } = params;
 
@@ -20,7 +21,7 @@ const CareScheduleScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF8E1',
+    backgroundColor: getColor.background(),
   },
   content: {
     flex: 1,
@@ -29,7 +30,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#5D4037',
+    color: getColor.text(),
     marginBottom: 16,
   },
 });

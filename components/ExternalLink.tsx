@@ -4,15 +4,12 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Link } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
+import { ComponentProps } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
-type ExternalLinkProps = {
-  href: string;
-  children: React.ReactNode;
-  style?: any;
-};
+type ExternalLinkProps = Omit<ComponentProps<typeof Link>, 'href'> & { href: string };
 
-export function ExternalLink(props: ExternalLinkProps) {
+export function ExternalLink(props: ExternalLinkProps): React.JSX.Element {
   const { href, children, style } = props;
   const colorScheme = useColorScheme();
 

@@ -1,36 +1,5 @@
 export type Gender = 'male' | 'female' | 'unknown';
 
-export type GuineaPig = {
-  id: string;
-  name: string;
-  breed?: string;
-  birthDate?: string;
-  weight?: number;
-  gender: Gender;
-  image?: string;
-  isPregnant?: boolean;
-  pregnancyStartDate?: string;
-  pregnancyNotes?: string;
-  expectedDueDate?: string;
-  createdAt: string;
-  updatedAt: string;
-  moodHistory?: MoodEntry[];
-  dietPreferences?: DietPreferences;
-  feedingSchedule?: FeedingSchedule;
-  healthRecords?: HealthRecord[];
-  medications?: Medication[];
-  vetAppointments?: VetAppointment[];
-  weightRecords?: WeightRecord[];
-  moodEntries?: MoodEntry[];
-  wasteLogs?: WasteLog[];
-  // Family relationship properties
-  motherId?: string;
-  fatherId?: string;
-  mate?: string;
-  siblings?: string[];
-  children?: string[];
-};
-
 export type Mood = 'happy' | 'content' | 'neutral' | 'anxious' | 'sad';
 
 export type MoodEntry = {
@@ -44,7 +13,7 @@ export type MoodEntry = {
 
 export type WasteType = 'poop' | 'pee';
 
-export type PoopConsistency = 'normal' | 'soft' | 'wet' | 'dry' | 'diarrhea';
+export type PoopConsistency = 'normal' | 'regular' | 'soft' | 'wet' | 'dry' | 'diarrhea';
 export type PoopColor = 'brown' | 'dark_brown' | 'green' | 'white' | 'red' | 'black';
 export type PeeColor = 'clear' | 'cloudy' | 'dark_yellow' | 'orange' | 'red' | 'brown';
 
@@ -61,6 +30,9 @@ export interface WasteLog {
   poopColor?: PoopColor;
   peeColor?: PeeColor;
   peeVolume?: 'normal' | 'excessive' | 'reduced';
+  amount?: string;
+  color?: string;
+  time?: string;
 }
 
 export type HealthRecord = {
@@ -137,4 +109,35 @@ export type FeedingSchedule = {
     days: number[];
     amount: string;
   };
+};
+
+export type GuineaPig = {
+  id: string;
+  name: string;
+  breed?: string;
+  birthDate?: string;
+  weight?: number;
+  gender: Gender;
+  image?: string;
+  isPregnant?: boolean;
+  pregnancyStartDate?: string;
+  pregnancyNotes?: string;
+  expectedDueDate?: string;
+  createdAt: string;
+  updatedAt: string;
+  moodHistory?: MoodEntry[];
+  dietPreferences?: DietPreferences;
+  feedingSchedule?: FeedingSchedule;
+  healthRecords?: HealthRecord[];
+  medications?: Medication[];
+  vetAppointments?: VetAppointment[];
+  weightRecords?: WeightRecord[];
+  moodEntries?: MoodEntry[];
+  wasteLogs?: WasteLog[];
+  // Family relationship properties
+  motherId?: string;
+  fatherId?: string;
+  mate?: string;
+  siblings?: string[];
+  children?: string[];
 }; 

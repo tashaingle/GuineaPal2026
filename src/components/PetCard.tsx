@@ -1,20 +1,18 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+
 import React from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { getColor } from '../theme/colors';
 
 type PetCardProps = {
   name: string;
   species: string;
   onPress: () => void;
-  style?: any;
+  style?: ViewStyle;
 };
 
-export function PetCard({ name, species, onPress, style }: PetCardProps) {
-  const colorScheme = useColorScheme();
-
+export function PetCard({ name, species, onPress, style }: PetCardProps): React.ReactElement {
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -23,7 +21,7 @@ export function PetCard({ name, species, onPress, style }: PetCardProps) {
       <ThemedView
         style={[
           styles.card,
-          { backgroundColor: Colors[colorScheme].background },
+          { backgroundColor: getColor.background() },
         ]}
       >
         <ThemedText style={styles.name}>{name}</ThemedText>
@@ -41,7 +39,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: getColor.border(),
   },
   name: {
     fontSize: 18,

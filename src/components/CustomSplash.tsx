@@ -1,6 +1,7 @@
-import colors from '@/theme/colors';
+
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { getColor } from '../theme/colors';
 
 interface CustomSplashProps {
   error?: string | null;
@@ -9,7 +10,7 @@ interface CustomSplashProps {
 const CustomSplash: React.FC<CustomSplashProps> = ({ error }) => {
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color={colors.primary.DEFAULT} style={styles.loader} />
+      <ActivityIndicator size="large" color={getColor.primary()} style={styles.loader} />
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
@@ -18,7 +19,7 @@ const CustomSplash: React.FC<CustomSplashProps> = ({ error }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.DEFAULT,
+    backgroundColor: getColor.background(),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -26,7 +27,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   errorText: {
-    color: '#FF0000',
+    color: getColor.error(),
     marginTop: 10,
     textAlign: 'center',
     paddingHorizontal: 20,

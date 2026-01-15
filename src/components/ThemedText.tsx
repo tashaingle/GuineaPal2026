@@ -1,6 +1,7 @@
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { commonStyles } from '@/theme/styles';
 import React from 'react';
-import { Text, TextProps } from 'react-native';
+import { Text, TextProps, TextStyle } from 'react-native';
 
 type ThemedTextProps = TextProps & {
   lightColor?: string;
@@ -8,21 +9,28 @@ type ThemedTextProps = TextProps & {
   type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
 };
 
-export function ThemedText(props: ThemedTextProps) {
+export function ThemedText(props: ThemedTextProps): React.ReactElement {
   const { style, lightColor, darkColor, type = 'default', ...otherProps } = props;
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
 
+  const getTextStyle = (): TextStyle => {
+    switch (type) {
+      case 'title':
+        return commonStyles.heading;
+      case 'defaultSemiBold':
+        return commonStyles.label;
+      case 'subtitle':
+        return commonStyles.subheading;
+      case 'link':
+        return commonStyles.link;
+      default:
+        return commonStyles.text;
+    }
+  };
+
   return (
     <Text
-      style={[
-        { color },
-        type === 'default' ? { fontSize: 16 } : {},
-        type === 'title' ? { fontSize: 32, fontWeight: 'bold' } : {},
-        type === 'defaultSemiBold' ? { fontSize: 16, fontWeight: '600' } : {},
-        type === 'subtitle' ? { fontSize: 20, fontWeight: '600' } : {},
-        type === 'link' ? { fontSize: 16, color: '#0A7EA4' } : {},
-        style,
-      ]}
+      style={[getTextStyle(), { color }, style]}
       {...otherProps}
     />
   );

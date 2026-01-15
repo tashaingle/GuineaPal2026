@@ -2,7 +2,7 @@ import AddEmergencyContactScreen from '@/screens/AddEmergencyContactScreen';
 import { Stack } from 'expo-router/stack';
 import React from 'react';
 
-export default function AddEmergencyContactRoute() {
+export default function AddEmergencyContactRoute(): JSX.Element {
   return (
     <>
       <Stack.Screen

@@ -1,7 +1,7 @@
 import AppHeader from '@/components/AppHeader';
 import { GUINEA_PIG_BREEDS } from '@/constants/breeds';
 import { usePet } from '@/context/PetContext';
-import colors from '@/theme/colors';
+import { getColor } from '@/theme/colors';
 import { MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
@@ -11,7 +11,6 @@ import React, { useState } from 'react';
 import {
     Alert,
     Image,
-    ImageStyle,
     Modal,
     Platform,
     ScrollView,
@@ -22,6 +21,7 @@ import {
     View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import uuid from 'react-native-uuid';
 
 const GUINEA_PIG_COLORS = [
     'Black',
@@ -47,7 +47,15 @@ const GUINEA_PIG_NAMES = [
     'Ziggy', 'Zephyr', 'Zorro', 'Zigzag', 'Zipper', 'Zesty', 'Zany', 'Zippy', 'Zesty', 'Zippy'
 ] as const;
 
-const AddPetScreen = () => {
+interface DropdownProps {
+    items: readonly string[];
+    selectedValue: string;
+    onSelect: (value: string) => void;
+    isVisible: boolean;
+    onClose: () => void;
+}
+
+const AddPetScreen: React.FC = (): JSX.Element => {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { addPet } = usePet();
@@ -61,7 +69,7 @@ const AddPetScreen = () => {
     const [showBreedDropdown, setShowBreedDropdown] = useState(false);
     const [showColorDropdown, setShowColorDropdown] = useState(false);
 
-    const pickImage = async () => {
+    const pickImage = async (): Promise<void> => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
@@ -74,12 +82,12 @@ const AddPetScreen = () => {
         }
     };
 
-    const generateRandomName = () => {
+    const generateRandomName = (): void => {
         const randomIndex = Math.floor(Math.random() * GUINEA_PIG_NAMES.length);
         setName(GUINEA_PIG_NAMES[randomIndex]);
     };
 
-    const handleDateChange = (event: any, selectedDate?: Date) => {
+    const handleDateChange = (event: { type: string }, selectedDate?: Date): void => {
         if (Platform.OS === 'android') {
             setShowDatePicker(false);
         }
@@ -88,7 +96,7 @@ const AddPetScreen = () => {
         }
     };
 
-    const handleSave = async () => {
+    const handleSave = async (): Promise<void> => {
         if (!name.trim()) {
             Alert.alert('Error', 'Please enter a name for your guinea pig');
             return;
@@ -108,7 +116,7 @@ const AddPetScreen = () => {
 
         try {
             const newPet = {
-                id: Date.now().toString(),
+                id: uuid.v4(),
                 name: name.trim(),
                 breed,
                 colors: selectedColors,
@@ -120,12 +128,12 @@ const AddPetScreen = () => {
 
             await addPet(newPet);
             router.back();
-        } catch (error) {
+        } catch {
             Alert.alert('Error', 'Failed to save guinea pig. Please try again.');
         }
     };
 
-    const handleColorSelect = (color: string) => {
+    const handleColorSelect = (color: string): void => {
         setSelectedColors(prev => {
             if (prev.includes(color)) {
                 return prev.filter(c => c !== color);
@@ -134,7 +142,7 @@ const AddPetScreen = () => {
         });
     };
 
-    const renderDropdown = (items: readonly string[], selectedValue: string, onSelect: (value: string) => void, isVisible: boolean, onClose: () => void) => (
+    const renderDropdown = ({ items, selectedValue, onSelect, isVisible, onClose }: DropdownProps): JSX.Element => (
         <Modal
             visible={isVisible}
             transparent
@@ -142,7 +150,7 @@ const AddPetScreen = () => {
             onRequestClose={onClose}
         >
             <TouchableOpacity
-                style={styles.modalOverlay}
+                style={[styles.modalOverlay, { backgroundColor: getColor.overlay() }]}
                 activeOpacity={1}
                 onPress={onClose}
             >
@@ -174,7 +182,7 @@ const AddPetScreen = () => {
         </Modal>
     );
 
-    const renderColorDropdown = () => (
+    const renderColorDropdown = (): JSX.Element => (
         <Modal
             visible={showColorDropdown}
             transparent
@@ -182,7 +190,7 @@ const AddPetScreen = () => {
             onRequestClose={() => setShowColorDropdown(false)}
         >
             <TouchableOpacity
-                style={styles.modalOverlay}
+                style={[styles.modalOverlay, { backgroundColor: getColor.overlay() }]}
                 activeOpacity={1}
                 onPress={() => setShowColorDropdown(false)}
             >
@@ -220,7 +228,7 @@ const AddPetScreen = () => {
                         <Image source={{ uri: image }} style={styles.image} />
                     ) : (
                         <View style={styles.imagePlaceholder}>
-                            <MaterialIcons name="add-a-photo" size={32} color={colors.text.secondary} />
+                            <MaterialIcons name="add-a-photo" size={32} color={getColor.textLight()} />
                             <Text style={styles.imagePlaceholderText}>Add Photo</Text>
                         </View>
                     )}
@@ -235,7 +243,7 @@ const AddPetScreen = () => {
                                 value={name}
                                 onChangeText={setName}
                                 placeholder="Enter name"
-                                placeholderTextColor={colors.text.secondary}
+                                placeholderTextColor={getColor.textLight()}
                             />
                             <TouchableOpacity 
                                 style={styles.nameGeneratorButton}
@@ -244,7 +252,7 @@ const AddPetScreen = () => {
                                 <MaterialIcons 
                                     name="auto-awesome" 
                                     size={24} 
-                                    color={colors.buttons.brown} 
+                                    color={getColor.primary()} 
                                 />
                             </TouchableOpacity>
                         </View>
@@ -258,9 +266,9 @@ const AddPetScreen = () => {
                                 </TouchableOpacity>
                                 <Text style={styles.suggestionsTitle}>Name Suggestions:</Text>
                                 <View style={styles.suggestionsList}>
-                                    {GUINEA_PIG_NAMES.slice(0, 5).map((suggestion, index) => (
+                                    {GUINEA_PIG_NAMES.slice(0, 5).map((suggestion) => (
                                         <TouchableOpacity
-                                            key={index}
+                                            key={suggestion}
                                             style={styles.suggestionItem}
                                             onPress={() => {
                                                 setName(suggestion);
@@ -277,15 +285,22 @@ const AddPetScreen = () => {
 
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Breed</Text>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.input}
                             onPress={() => setShowBreedDropdown(true)}
                         >
-                            <Text style={[styles.inputText, !breed && { color: colors.text.secondary }]}>
+                            <Text style={[styles.inputText, !breed && { color: getColor.textLight() }]}>
                                 {breed || 'Select breed'}
                             </Text>
-                            <MaterialIcons name="arrow-drop-down" size={24} color={colors.text.secondary} />
+                            <MaterialIcons name="arrow-drop-down" size={24} color={getColor.textLight()} />
                         </TouchableOpacity>
+                        {renderDropdown({
+                            items: GUINEA_PIG_BREEDS,
+                            selectedValue: breed,
+                            onSelect: setBreed,
+                            isVisible: showBreedDropdown,
+                            onClose: () => setShowBreedDropdown(false)
+                        })}
                     </View>
 
                     <View style={styles.inputContainer}>
@@ -303,17 +318,17 @@ const AddPetScreen = () => {
                                                 onPress={() => handleColorSelect(colorItem)}
                                                 style={styles.colorTagRemove}
                                             >
-                                                <MaterialIcons name="close" size={16} color={colors.text.light} />
+                                                <MaterialIcons name="close" size={16} color={getColor.textLight()} />
                                             </TouchableOpacity>
                                         </View>
                                     ))
                                 ) : (
-                                    <Text style={[styles.inputText, { color: colors.text.secondary }]}>
+                                    <Text style={[styles.inputText, { color: getColor.textLight() }]}>
                                         Select colors
                                     </Text>
                                 )}
                             </View>
-                            <MaterialIcons name="arrow-drop-down" size={24} color={colors.text.secondary} />
+                            <MaterialIcons name="arrow-drop-down" size={24} color={getColor.textLight()} />
                         </TouchableOpacity>
                     </View>
 
@@ -323,10 +338,10 @@ const AddPetScreen = () => {
                             style={styles.input}
                             onPress={() => setShowDatePicker(true)}
                         >
-                            <Text style={[styles.inputText, !birthdate && { color: colors.text.secondary }]}>
+                            <Text style={[styles.inputText, !birthdate && { color: getColor.textLight() }]}>
                                 {birthdate ? format(birthdate, 'dd/MM/yyyy') : 'Select birthdate'}
                             </Text>
-                            <MaterialIcons name="calendar-today" size={24} color={colors.text.secondary} />
+                            <MaterialIcons name="calendar-today" size={24} color={getColor.textLight()} />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -336,7 +351,6 @@ const AddPetScreen = () => {
                 </TouchableOpacity>
             </ScrollView>
 
-            {renderDropdown(GUINEA_PIG_BREEDS, breed, setBreed, showBreedDropdown, () => setShowBreedDropdown(false))}
             {renderColorDropdown()}
             {showDatePicker && (
                 <DateTimePicker
@@ -376,94 +390,98 @@ const AddPetScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.DEFAULT,
+        backgroundColor: getColor.background(),
     },
     content: {
         flex: 1,
         padding: 16,
     },
     imageContainer: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        backgroundColor: colors.background.card,
-        alignSelf: 'center',
-        marginBottom: 24,
+        width: '100%',
+        aspectRatio: 1,
+        borderRadius: 12,
         overflow: 'hidden',
+        backgroundColor: getColor.backgroundLight(),
+        marginBottom: 24,
     },
     image: {
         width: '100%',
         height: '100%',
-    } as ImageStyle,
+        resizeMode: 'cover',
+    },
     imagePlaceholder: {
-        width: '100%',
-        height: '100%',
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: getColor.backgroundLight(),
     },
     imagePlaceholderText: {
-        color: colors.text.secondary,
         marginTop: 8,
+        fontSize: 16,
+        color: getColor.textLight(),
     },
     form: {
         gap: 16,
     },
     inputContainer: {
-        marginBottom: 16,
+        gap: 8,
     },
     label: {
         fontSize: 16,
         fontWeight: '600',
-        marginBottom: 8,
-        color: colors.text.primary,
+        color: getColor.text(),
     },
     input: {
-        backgroundColor: colors.background.card,
-        borderRadius: 8,
-        padding: 12,
+        height: 48,
         borderWidth: 1,
-        borderColor: colors.border.DEFAULT,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        borderColor: getColor.borderLight(),
+        borderRadius: 8,
+        paddingHorizontal: 16,
+        fontSize: 16,
+        color: getColor.text(),
+        backgroundColor: getColor.backgroundLight(),
     },
     inputText: {
-        color: colors.text.primary,
+        color: getColor.text(),
         fontSize: 16,
     },
     nameInputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.background.card,
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
+        gap: 8,
     },
     nameGeneratorButton: {
-        padding: 4,
+        width: 48,
+        height: 48,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: getColor.backgroundLight(),
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: getColor.borderLight(),
     },
     nameSuggestionsContainer: {
-        backgroundColor: colors.background.card,
+        backgroundColor: getColor.backgroundLight(),
         borderRadius: 12,
         padding: 16,
         marginTop: 8,
     },
     generateButton: {
-        backgroundColor: colors.buttons.brown,
+        backgroundColor: getColor.primary(),
         borderRadius: 8,
         padding: 12,
         alignItems: 'center',
         marginBottom: 16,
     },
     generateButtonText: {
-        color: colors.text.light,
+        color: getColor.textLight(),
         fontSize: 16,
         fontWeight: '500',
     },
     suggestionsTitle: {
         fontSize: 16,
         fontWeight: '500',
-        color: colors.text.primary,
+        color: getColor.text(),
         marginBottom: 8,
     },
     suggestionsList: {
@@ -471,60 +489,60 @@ const styles = StyleSheet.create({
     },
     suggestionItem: {
         padding: 12,
-        backgroundColor: colors.background.DEFAULT,
+        backgroundColor: getColor.background(),
         borderRadius: 8,
     },
     suggestionText: {
-        color: colors.text.primary,
+        color: getColor.text(),
         fontSize: 16,
     },
     saveButton: {
-        backgroundColor: colors.buttons.brown,
+        backgroundColor: getColor.primary(),
         borderRadius: 12,
         padding: 16,
         alignItems: 'center',
         marginTop: 24,
     },
     saveButtonText: {
-        color: colors.text.light,
+        color: getColor.textLight(),
         fontSize: 16,
         fontWeight: '500',
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: getColor.overlay(),
         justifyContent: 'center',
         alignItems: 'center',
     },
     dropdownContainer: {
-        backgroundColor: colors.background.card,
+        backgroundColor: getColor.backgroundLight(),
         borderRadius: 12,
         width: '80%',
-        maxHeight: '60%',
+        maxHeight: '80%',
     },
     dropdownList: {
-        padding: 8,
+        maxHeight: 300,
     },
     dropdownItem: {
-        padding: 12,
+        padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: colors.border.DEFAULT,
+        borderBottomColor: getColor.borderLight(),
     },
     selectedItem: {
-        backgroundColor: colors.buttons.brown,
+        backgroundColor: getColor.primary(),
     },
     dropdownItemText: {
         fontSize: 16,
-        color: colors.text.primary,
+        color: getColor.text(),
     },
     selectedItemText: {
-        color: colors.text.light,
+        color: getColor.textLight(),
     },
     colorInput: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: colors.background.card,
+        backgroundColor: getColor.backgroundLight(),
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingVertical: 12,
@@ -539,7 +557,7 @@ const styles = StyleSheet.create({
     colorTag: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.primary.DEFAULT,
+        backgroundColor: getColor.primary(),
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 16,
@@ -547,7 +565,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     colorTagText: {
-        color: colors.text.light,
+        color: getColor.textLight(),
         marginRight: 4,
     },
     colorTagRemove: {
@@ -559,13 +577,13 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: getColor.overlay(),
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 1000,
     },
     datePickerContainer: {
-        backgroundColor: colors.background.card,
+        backgroundColor: getColor.backgroundLight(),
         borderRadius: 12,
         width: '90%',
         maxWidth: 400,
@@ -576,15 +594,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: colors.border.DEFAULT,
+        borderBottomColor: getColor.borderLight(),
     },
     datePickerDoneText: {
-        color: colors.primary.DEFAULT,
+        color: getColor.primary(),
         fontSize: 16,
         fontWeight: '600',
-    },
-    calendarIcon: {
-        marginRight: 8,
     },
 });
 

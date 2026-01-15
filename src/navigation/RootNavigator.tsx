@@ -1,5 +1,4 @@
 import { RootStackParamList } from '@/navigation/types';
-import AchievementsScreen from '@/screens/AchievementsScreen';
 import AddEditPetScreen from '@/screens/AddEditPetScreen';
 import BondingGuideScreen from '@/screens/BondingGuideScreen';
 import BondingTimerScreen from '@/screens/BondingTimerScreen';
@@ -18,17 +17,17 @@ import WeightTrackerScreen from '@/screens/health/WeightTrackerScreen';
 import PetListScreen from '@/screens/PetListScreen';
 import ProfileScreen from '@/screens/ProfileScreen';
 import WelcomeScreen from '@/screens/WelcomeScreen';
-import colors from '@/theme/colors';
+import { getColor } from '@/theme/colors';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import * as React from 'react';
+import React from 'react';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 // Define screen options outside of the component to prevent recreation
 const screenOptions: NativeStackNavigationOptions = {
   headerShown: false,
-  contentStyle: { backgroundColor: colors.background.DEFAULT },
+  contentStyle: { backgroundColor: getColor.background() },
   animation: 'none',
   animationTypeForReplace: 'pop',
   gestureEnabled: false,
@@ -36,7 +35,7 @@ const screenOptions: NativeStackNavigationOptions = {
   freezeOnBlur: true
 };
 
-const RootStack = () => {
+const RootStack = (): JSX.Element => {
   return (
     <Stack.Navigator
       initialRouteName="welcome"
@@ -101,10 +100,6 @@ const RootStack = () => {
         component={DietManagerScreen}
       />
       <Stack.Screen 
-        name="achievements" 
-        component={AchievementsScreen}
-      />
-      <Stack.Screen 
         name="bonding-tracker" 
         component={BondingTrackerScreen}
       />
@@ -128,7 +123,7 @@ const RootStack = () => {
   );
 };
 
-const RootNavigator = () => {
+const RootNavigator = (): JSX.Element => {
   return (
     <NavigationContainer>
       <RootStack />

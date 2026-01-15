@@ -1,13 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthResponse, LoginCredentials, RegisterCredentials, User } from '../types/auth';
 
+// Constants
 const AUTH_TOKEN_KEY = '@guinea_pal_auth_token';
 const USER_KEY = '@guinea_pal_user';
-
-// Mock user storage for development
 const MOCK_USERS_KEY = '@guinea_pal_mock_users';
 
-// Default test account
+// Define the default test user before the class
 const DEFAULT_TEST_USER: User = {
   id: '1',
   email: 'test@guineapal.com',
@@ -16,29 +15,33 @@ const DEFAULT_TEST_USER: User = {
   createdAt: new Date().toISOString()
 };
 
+// Define the class before any usage
 class AuthService {
   private static instance: AuthService;
   private token: string | null = null;
   private user: User | null = null;
+  private currentUser: User | null = null;
+  private authStateListeners: ((user: User | null) => void)[] = [];
 
   private constructor() {
     // Initialize mock data when service is created
     this.initializeMockData();
+    this.loadUserFromStorage();
   }
 
-  private async initializeMockData() {
+  private async initializeMockData(): Promise<void> {
     try {
       const existingUsers = await this.getMockUsers();
       if (existingUsers.length === 0) {
         // If no users exist, add the test user
         await this.saveMockUsers([DEFAULT_TEST_USER]);
       }
-    } catch (error) {
-      console.error('Failed to initialize mock data:', error);
+    } catch {
+      console.error('Failed to initialize mock data');
     }
   }
 
-  static getInstance(): AuthService {
+  public static getInstance(): AuthService {
     if (!AuthService.instance) {
       AuthService.instance = new AuthService();
     }
@@ -49,8 +52,8 @@ class AuthService {
     try {
       const usersJson = await AsyncStorage.getItem(MOCK_USERS_KEY);
       return usersJson ? JSON.parse(usersJson) : [];
-    } catch (error) {
-      console.error('Error reading mock users:', error);
+    } catch {
+      console.error('Error reading mock users');
       return [];
     }
   }
@@ -72,8 +75,8 @@ class AuthService {
       
       // Reinitialize with default test user
       await this.initializeMockData();
-    } catch (error) {
-      console.error('Failed to reset auth data:', error);
+    } catch {
+      console.error('Failed to reset auth data');
       throw new Error('Failed to reset auth data. Please try again.');
     }
   }
@@ -153,7 +156,7 @@ class AuthService {
       await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, USER_KEY]);
       this.token = null;
       this.user = null;
-    } catch (error) {
+    } catch {
       throw new Error('Logout failed. Please try again.');
     }
   }
@@ -179,6 +182,7 @@ class AuthService {
   }
 
   private async setUser(user: User): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = user;
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(userWithoutPassword));
     this.user = userWithoutPassword;
@@ -198,6 +202,28 @@ class AuthService {
     // Mock implementation - no actual syncing needed for development
     return Promise.resolve();
   }
+
+  private async loadUserFromStorage(): Promise<void> {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        this.currentUser = JSON.parse(userData);
+      }
+    } catch (error) {
+      console.error('Error loading user from storage:', error);
+    }
+  }
+
+  setCurrentUser(user: User | null): void {
+    this.currentUser = user;
+  }
 }
 
-export default AuthService.getInstance(); 
+// Create and export a single instance after the class definition
+export const authService = AuthService.getInstance();
+
+export const handleAuthStateChange = (user: User | null): void => {
+  authService.setCurrentUser(user);
+};
+
+export default authService; 

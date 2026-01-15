@@ -2,7 +2,13 @@ import CareGuideSection from '@/screens/CareGuideSection';
 import { Stack } from 'expo-router/stack';
 import React from 'react';
 
-export default function CareGuideSectionRoute() {
+const CareGuideSectionWrapper = (): JSX.Element => {
+    return (
+        <CareGuideSection />
+    );
+};
+
+export default function CareGuideSectionRoute(): JSX.Element {
     return (
         <>
             <Stack.Screen
@@ -10,7 +16,7 @@ export default function CareGuideSectionRoute() {
                     headerShown: false,
                 }}
             />
-            <CareGuideSection />
+            <CareGuideSectionWrapper />
         </>
     );
 } 

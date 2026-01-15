@@ -1,312 +1,127 @@
 import AppHeader from '@/components/AppHeader';
-import colors from '@/theme/colors';
+import { SYMPTOM_DATA } from '@/data/symptoms';
+import { getColor } from '@/theme/colors';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const SYMPTOMS = [
-    {
-        category: 'Respiratory Issues',
-        description: 'Problems with breathing and respiratory system',
-        symptoms: [
-            'Sneezing',
-            'Coughing',
-            'Wheezing',
-            'Difficulty breathing',
-            'Runny nose'
-        ],
-        possibleCauses: [
-            'Upper respiratory infection',
-            'Allergies',
-            'Dust or bedding irritation',
-            'Poor ventilation',
-            'Temperature extremes'
-        ],
-        severity: 'High',
-        recommendedActions: [
-            'Keep the environment clean and well-ventilated',
-            'Maintain proper temperature (65-75°F)',
-            'Use dust-free bedding',
-            'Avoid drafts',
-            'Seek veterinary care if symptoms persist'
-        ]
-    },
-    {
-        category: 'Digestive Problems',
-        description: 'Issues with eating, digestion, and waste',
-        symptoms: [
-            'Loss of appetite',
-            'Diarrhea',
-            'Constipation',
-            'Weight loss',
-            'Abnormal droppings'
-        ],
-        possibleCauses: [
-            'Dietary changes',
-            'Parasites',
-            'Bacterial infection',
-            'Dental problems',
-            'Stress'
-        ],
-        severity: 'High',
-        recommendedActions: [
-            'Ensure constant access to hay',
-            'Provide fresh vegetables daily',
-            'Keep water clean and fresh',
-            'Monitor food intake',
-            'Seek veterinary care if symptoms persist'
-        ]
-    },
-    {
-        category: 'Skin Issues',
-        description: 'Problems with skin and fur condition',
-        symptoms: [
-            'Hair loss',
-            'Scabs or sores',
-            'Excessive scratching',
-            'Dry or flaky skin',
-            'Parasites visible'
-        ],
-        possibleCauses: [
-            'Mites or lice',
-            'Fungal infection',
-            'Allergies',
-            'Poor nutrition',
-            'Stress'
-        ],
-        severity: 'Medium',
-        recommendedActions: [
-            'Regular grooming',
-            'Clean bedding',
-            'Proper nutrition',
-            'Check for parasites',
-            'Consult vet for treatment'
-        ]
-    },
-    {
-        category: 'Dental Problems',
-        description: 'Issues with teeth and eating',
-        symptoms: [
-            'Difficulty eating',
-            'Drooling',
-            'Weight loss',
-            'Overgrown teeth',
-            'Facial swelling'
-        ],
-        possibleCauses: [
-            'Malocclusion',
-            'Poor diet',
-            'Lack of hay',
-            'Genetic factors',
-            'Injury'
-        ],
-        severity: 'High',
-        recommendedActions: [
-            'Provide unlimited hay',
-            'Regular dental checks',
-            'Proper diet',
-            'Monitor eating habits',
-            'Seek veterinary care'
-        ]
-    },
-    {
-        category: 'Urinary Issues',
-        description: 'Problems with urination and related systems',
-        symptoms: [
-            'Difficulty urinating',
-            'Blood in urine',
-            'Frequent urination',
-            'Straining',
-            'Crying while urinating'
-        ],
-        possibleCauses: [
-            'Urinary tract infection',
-            'Bladder stones',
-            'Dehydration',
-            'Poor diet',
-            'Stress'
-        ],
-        severity: 'High',
-        recommendedActions: [
-            'Ensure fresh water',
-            'Proper diet',
-            'Clean environment',
-            'Monitor urination',
-            'Seek immediate veterinary care'
-        ]
-    },
-    {
-        category: 'Eye Problems',
-        description: 'Issues with eyes and vision',
-        symptoms: [
-            'Cloudy eyes',
-            'Discharge',
-            'Swelling',
-            'Squinting',
-            'Redness'
-        ],
-        possibleCauses: [
-            'Infection',
-            'Injury',
-            'Allergies',
-            'Dental problems',
-            'Foreign objects'
-        ],
-        severity: 'Medium',
-        recommendedActions: [
-            'Keep environment clean',
-            'Check for injuries',
-            'Monitor behavior',
-            'Avoid drafts',
-            'Consult vet if symptoms persist'
-        ]
-    },
-    {
-        category: 'Behavioral Changes',
-        description: 'Unusual changes in behavior and activity',
-        symptoms: [
-            'Lethargy',
-            'Aggression',
-            'Hiding',
-            'Reduced activity',
-            'Changes in social behavior'
-        ],
-        possibleCauses: [
-            'Pain or illness',
-            'Stress',
-            'Environmental changes',
-            'Social issues',
-            'Age-related changes'
-        ],
-        severity: 'Medium',
-        recommendedActions: [
-            'Monitor behavior',
-            'Check environment',
-            'Ensure proper socialization',
-            'Maintain routine',
-            'Consult vet if changes persist'
-        ]
-    },
-    {
-        category: 'Weight Changes',
-        description: 'Unexpected changes in body weight',
-        symptoms: [
-            'Sudden weight loss',
-            'Weight gain',
-            'Loss of muscle mass',
-            'Changes in body shape',
-            'Reduced appetite'
-        ],
-        possibleCauses: [
-            'Poor diet',
-            'Dental problems',
-            'Parasites',
-            'Underlying illness',
-            'Age-related changes'
-        ],
-        severity: 'High',
-        recommendedActions: [
-            'Regular weight monitoring',
-            'Proper diet',
-            'Check teeth',
-            'Monitor food intake',
-            'Seek veterinary care'
-        ]
-    }
-];
+interface SymptomCategory {
+    title: string;
+    icon: keyof typeof MaterialIcons.glyphMap;
+    category: string;
+}
 
-const SymptomCheckerScreen = () => {
+const SymptomCheckerScreen: React.FC = () => {
     const router = useRouter();
     const insets = useSafeAreaInsets();
 
+    const symptomCategories: SymptomCategory[] = [
+        {
+            title: 'Digestive Issues',
+            icon: 'restaurant',
+            category: 'digestive'
+        },
+        {
+            title: 'Respiratory Problems',
+            icon: 'air',
+            category: 'respiratory'
+        },
+        {
+            title: 'Skin & Coat Issues',
+            icon: 'pets',
+            category: 'skin'
+        },
+        {
+            title: 'Behavioral Changes',
+            icon: 'psychology',
+            category: 'behavioral'
+        },
+        {
+            title: 'Eye & Ear Problems',
+            icon: 'visibility',
+            category: 'eye-ear'
+        },
+        {
+            title: 'Urinary Issues',
+            icon: 'water-drop',
+            category: 'urinary'
+        }
+    ];
+
+    const handleCategoryPress = (category: SymptomCategory): void => {
+        router.push({
+            pathname: '/(stack)/symptom-details',
+            params: { category: category.category }
+        });
+    };
+
     return (
-        <KeyboardAvoidingView 
-            style={[styles.container, { paddingTop: insets.top }]}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-        >
+        <View style={[styles.container, { paddingTop: insets.top }]}>
             <AppHeader title="Symptom Checker" />
 
-            <ScrollView style={styles.content}>
+            <View style={styles.content}>
                 <Text style={styles.introduction}>
-                    Use this guide to help identify potential health issues in your guinea pigs. 
-                    Always consult with a veterinarian for proper diagnosis and treatment.
+                    Select a category to learn about common guinea pig symptoms and when to seek veterinary care.
                 </Text>
 
                 <View style={styles.gridContainer}>
-                    {SYMPTOMS.map((section, index) => (
+                    {symptomCategories.map((category) => (
                         <TouchableOpacity
-                            key={index}
+                            key={`symptom-${category.title.replace(/\s+/g, '-').toLowerCase()}`}
                             style={styles.sectionCard}
-                            onPress={() => {
-                                router.push({
-                                    pathname: '/(stack)/symptom-details',
-                                    params: {
-                                        category: section.category,
-                                        description: section.description,
-                                        symptoms: section.symptoms.join(','),
-                                        possibleCauses: section.possibleCauses.join(','),
-                                        severity: section.severity,
-                                        recommendedActions: section.recommendedActions.join(',')
-                                    }
-                                });
-                            }}
+                            onPress={() => handleCategoryPress(category)}
                         >
                             <View style={styles.sectionContent}>
                                 <MaterialIcons 
-                                    name="medical-services" 
-                                    size={24} 
-                                    color={colors.buttons.brown} 
+                                    name={category.icon} 
+                                    size={48} 
+                                    color={getColor.buttonBrown()} 
                                 />
-                                <Text style={styles.sectionTitle}>{section.category}</Text>
+                                <Text style={styles.sectionTitle}>{category.title}</Text>
+                                <Text style={styles.symptomCount}>
+                                    {SYMPTOM_DATA[category.category]?.length || 0} symptoms
+                                </Text>
                             </View>
                         </TouchableOpacity>
                     ))}
                 </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+            </View>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.DEFAULT,
+        backgroundColor: getColor.backgroundLight(),
     },
     content: {
         flex: 1,
-        padding: 16,
+        padding: 12,
     },
     introduction: {
         fontSize: 16,
-        color: colors.text.secondary,
+        color: getColor.textSecondary(),
         marginBottom: 24,
         lineHeight: 24,
+        textAlign: 'center',
     },
     gridContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
+        gap: 12,
     },
     sectionCard: {
         width: '48%',
-        backgroundColor: colors.background.card,
+        backgroundColor: getColor.cardBackground(),
         borderRadius: 12,
         padding: 16,
-        marginBottom: 16,
+        marginBottom: 12,
         elevation: 2,
-        shadowColor: '#000',
+        shadowColor: getColor.shadow(),
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -314,14 +129,19 @@ const styles = StyleSheet.create({
     sectionContent: {
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: 100,
+        minHeight: 120,
     },
     sectionTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: colors.buttons.brown,
+        color: getColor.buttonBrown(),
         textAlign: 'center',
         marginTop: 12,
+    },
+    symptomCount: {
+        fontSize: 12,
+        color: getColor.textSecondary(),
+        marginTop: 4,
     },
 });
 

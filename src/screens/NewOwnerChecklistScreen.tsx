@@ -1,5 +1,5 @@
 import { RootStackParamList } from '@/navigation/types';
-import colors from '@/theme/colors';
+import { getColor } from '@/theme/colors';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -101,7 +101,7 @@ const NewOwnerChecklistScreen: React.FC<Props> = ({ navigation }) => {
     loadSavedProgress();
   }, []);
 
-  const loadSavedProgress = async () => {
+  const loadSavedProgress = async (): Promise<void> => {
     try {
       const savedProgress = await AsyncStorage.getItem('newOwnerChecklist');
       if (savedProgress) {
@@ -119,7 +119,7 @@ const NewOwnerChecklistScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const saveProgress = async (updatedChecklist: ChecklistCategory[]) => {
+  const saveProgress = async (updatedChecklist: ChecklistCategory[]): Promise<void> => {
     try {
       const progress = updatedChecklist.reduce((acc, category) => {
         category.items.forEach(item => {
@@ -133,7 +133,7 @@ const NewOwnerChecklistScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const toggleItem = (categoryIndex: number, itemIndex: number) => {
+  const toggleItem = (categoryIndex: number, itemIndex: number): void => {
     const updatedChecklist = [...checklist];
     if (updatedChecklist[categoryIndex]?.items[itemIndex]) {
       updatedChecklist[categoryIndex].items[itemIndex].isCompleted = 
@@ -143,7 +143,7 @@ const NewOwnerChecklistScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const calculateProgress = () => {
+  const calculateProgress = (): number => {
     const totalItems = checklist.reduce((sum, category) => sum + category.items.length, 0);
     const completedItems = checklist.reduce((sum, category) => 
       sum + category.items.filter(item => item.isCompleted).length, 0);
@@ -158,7 +158,7 @@ const NewOwnerChecklistScreen: React.FC<Props> = ({ navigation }) => {
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
-            <MaterialIcons name="arrow-back" size={24} color={colors.primary.DEFAULT} />
+            <MaterialIcons name="arrow-back" size={24} color={getColor.primary()} />
           </TouchableOpacity>
           <Text style={styles.title}>New Owner Checklist</Text>
         </View>
@@ -172,7 +172,7 @@ const NewOwnerChecklistScreen: React.FC<Props> = ({ navigation }) => {
                 styles.progressFill, 
                 { 
                   width: `${calculateProgress()}%`,
-                  backgroundColor: colors.primary.DEFAULT 
+                  backgroundColor: getColor.primary() 
                 }
               ]} 
             />
@@ -185,7 +185,7 @@ const NewOwnerChecklistScreen: React.FC<Props> = ({ navigation }) => {
           <Card key={category.title} style={styles.card}>
             <Card.Content>
               <View style={styles.categoryHeader}>
-                <MaterialIcons name={category.icon} size={24} color={colors.primary.DEFAULT} />
+                <MaterialIcons name={category.icon} size={24} color={getColor.primary()} />
                 <Text style={styles.categoryTitle}>{category.title}</Text>
               </View>
               {category.items.map((item, itemIndex) => (
@@ -196,7 +196,7 @@ const NewOwnerChecklistScreen: React.FC<Props> = ({ navigation }) => {
                   >
                     <Checkbox.Android
                       status={item.isCompleted ? 'checked' : 'unchecked'}
-                      color={colors.primary.DEFAULT}
+                      color={getColor.primary()}
                     />
                     <View style={styles.itemTextContainer}>
                       <Text style={styles.itemText}>{item.text}</Text>
@@ -218,17 +218,17 @@ const NewOwnerChecklistScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.DEFAULT,
+    backgroundColor: getColor.background(),
   },
   headerContainer: {
     padding: 16,
-    backgroundColor: colors.background.card,
+    backgroundColor: getColor.white(),
     marginHorizontal: 16,
     marginTop: 16,
     marginBottom: 16,
     borderRadius: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: getColor.shadow(),
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.primary.DEFAULT,
+    color: getColor.primary(),
     flex: 1,
   },
   progressContainer: {
@@ -253,12 +253,12 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 16,
-    color: colors.text.primary,
+    color: getColor.text(),
     marginBottom: 4,
   },
   progressBar: {
     height: 8,
-    backgroundColor: colors.background.elevated,
+    backgroundColor: getColor.backgroundLight(),
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -273,9 +273,9 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
     elevation: 2,
-    backgroundColor: colors.background.card,
+    backgroundColor: getColor.white(),
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: getColor.shadow(),
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.primary.DEFAULT,
+    color: getColor.primary(),
     marginLeft: 8,
   },
   checklistItem: {
@@ -304,11 +304,11 @@ const styles = StyleSheet.create({
   },
   itemText: {
     fontSize: 16,
-    color: colors.text.primary,
+    color: getColor.text(),
   },
   itemInfo: {
     fontSize: 14,
-    color: colors.text.secondary,
+    color: getColor.textLight(),
     marginTop: 2,
     fontStyle: 'italic',
   },

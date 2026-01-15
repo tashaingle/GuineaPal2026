@@ -1,0 +1,101 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+        maven {
+            url = uri("${rootProject.projectDir}/node_modules/react-native/android")
+        }
+        maven {
+            url = uri("${rootProject.projectDir}/node_modules/@react-native/gradle-plugin")
+        }
+        maven {
+            url = uri("${rootProject.projectDir}/node_modules/expo/android/maven")
+        }
+        maven {
+            url = uri("https://www.jitpack.io")
+        }
+    }
+
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            url = uri("${rootProject.projectDir}/node_modules/react-native/android")
+        }
+        maven {
+            url = uri("${rootProject.projectDir}/node_modules/@react-native/gradle-plugin")
+        }
+        maven {
+            url = uri("${rootProject.projectDir}/node_modules/expo/android/maven")
+        }
+        maven {
+            url = uri("https://www.jitpack.io")
+        }
+    }
+}
+
+rootProject.name = 'GuineaPal-New'
+
+// Disable transforms globally
+gradle.beforeProject { project ->
+    project.extensions.extraProperties.set('android.enableTransforms', false)
+    project.extensions.extraProperties.set('android.enableBuildCache', false)
+    project.extensions.extraProperties.set('android.enableParallelExecution', false)
+}
+
+// Disable build cache
+gradle.startParameter.buildCacheEnabled = false
+gradle.startParameter.parallelProjectExecutionEnabled = false
+gradle.startParameter.configureOnDemand = false
+
+// Configure Gradle properties
+gradle.projectsEvaluated {
+    gradle.startParameter.parallelProjectExecutionEnabled = false
+    gradle.startParameter.buildCacheEnabled = false
+    gradle.startParameter.configureOnDemand = false
+}
+
+// Disable transform metadata
+gradle.taskGraph.beforeTask { task ->
+    if (task.name.contains('transform')) {
+        task.doFirst {
+            def transformDir = new File("${gradle.gradleUserHomeDir}/caches/${gradle.gradleVersion}/transforms")
+            if (transformDir.exists()) {
+                transformDir.eachDir { dir ->
+                    if (dir.name.contains('metadata')) {
+                        dir.deleteDir()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Configure transform metadata handling
+gradle.taskGraph.whenReady { graph ->
+    graph.allTasks.each { task ->
+        if (task.name.contains('transform')) {
+            task.doFirst {
+                def transformDir = new File("${gradle.gradleUserHomeDir}/caches/${gradle.gradleVersion}/transforms")
+                if (transformDir.exists()) {
+                    transformDir.eachDir { dir ->
+                        if (dir.name.contains('metadata')) {
+                            dir.deleteDir()
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Configure transform metadata handling for all projects
+// Note: allprojects block moved to build.gradle
+
+// Include all projects
+include ':app' 

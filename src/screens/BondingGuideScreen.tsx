@@ -1,4 +1,5 @@
 import { RootStackParamList } from '@/navigation/types';
+import { colors } from '@/theme/colors';
 import { MaterialIcons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React from 'react';
@@ -11,6 +12,7 @@ import {
 } from 'react-native';
 import { Card } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getColor } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'bonding-guide'>;
 
@@ -93,7 +95,7 @@ const BondingGuideScreen: React.FC<Props> = ({ navigation }) => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <MaterialIcons name="arrow-back" size={24} color="#5D4037" />
+          <MaterialIcons name="arrow-back" size={24} color={colors.brown} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Bonding Guide</Text>
       </View>
@@ -105,19 +107,19 @@ const BondingGuideScreen: React.FC<Props> = ({ navigation }) => {
           these guidelines for successful bonding:
         </Text>
 
-        {BONDING_TIPS.map((section, index) => (
-          <Card key={section.title} style={styles.card}>
+        {BONDING_TIPS.map((section) => (
+          <Card key={`section-${section.title}`} style={styles.card}>
             <Card.Content>
               <View style={styles.cardHeader}>
                 <MaterialIcons
-                  name={section.icon as any}
+                  name={section.icon as keyof typeof MaterialIcons.glyphMap}
                   size={24}
-                  color="#5D4037"
+                  color={colors.brown}
                 />
                 <Text style={styles.cardTitle}>{section.title}</Text>
               </View>
-              {section.tips.map((tip, tipIndex) => (
-                <View key={tipIndex} style={styles.tipContainer}>
+              {section.tips.map((tip) => (
+                <View key={`tip-${section.title}-${tip}`} style={styles.tipContainer}>
                   <Text style={styles.bullet}>•</Text>
                   <Text style={styles.tipText}>{tip}</Text>
                 </View>
@@ -129,8 +131,8 @@ const BondingGuideScreen: React.FC<Props> = ({ navigation }) => {
         <Card style={[styles.card, styles.emergencyCard]}>
           <Card.Content>
             <View style={styles.cardHeader}>
-              <MaterialIcons name="emergency" size={24} color="#F44336" />
-              <Text style={[styles.cardTitle, { color: '#F44336' }]}>
+              <MaterialIcons name="emergency" size={24} color={getColor.error()} />
+              <Text style={[styles.cardTitle, { color: getColor.error() }]}>
                 When to Separate
               </Text>
             </View>
@@ -169,15 +171,15 @@ const BondingGuideScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF8E1',
+    backgroundColor: getColor.backgroundLight(),
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    backgroundColor: '#FFF8E1',
+    borderBottomColor: getColor.border(),
+    backgroundColor: getColor.white(),
   },
   backButton: {
     marginRight: 16,
@@ -186,7 +188,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#5D4037',
+    color: colors.brown,
   },
   content: {
     flex: 1,
@@ -194,15 +196,15 @@ const styles = StyleSheet.create({
   },
   introduction: {
     fontSize: 16,
-    color: '#5D4037',
+    color: colors.brown,
     lineHeight: 24,
     marginBottom: 20,
   },
   card: {
     marginBottom: 16,
-    backgroundColor: 'white',
+    backgroundColor: getColor.white(),
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: getColor.shadow(),
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -215,7 +217,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#5D4037',
+    color: colors.brown,
     marginLeft: 12,
   },
   tipContainer: {
@@ -225,24 +227,24 @@ const styles = StyleSheet.create({
   },
   bullet: {
     fontSize: 16,
-    color: '#5D4037',
+    color: colors.brown,
     marginRight: 8,
     marginTop: -2,
   },
   tipText: {
     flex: 1,
     fontSize: 14,
-    color: '#795548',
+    color: getColor.secondary(),
     lineHeight: 20,
   },
   emergencyCard: {
     borderWidth: 1,
-    borderColor: '#FFCDD2',
+    borderColor: getColor.error(),
     marginBottom: 32,
   },
   emergencyText: {
     fontSize: 14,
-    color: '#D32F2F',
+    color: getColor.error(),
     marginBottom: 12,
   },
 });

@@ -1,16 +1,23 @@
-import colors from '@/theme/colors';
+
 import { GuineaPig } from '@/types/guineaPig';
 import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { getColor } from '../theme/colors';
 
 interface PetFeatureMenuProps {
-  pet: GuineaPig;
   onFeaturePress: (feature: string) => void;
+  _pet: GuineaPig;
 }
 
-const PetFeatureMenu: React.FC<PetFeatureMenuProps> = ({ pet, onFeaturePress }) => {
-  const features = [
+type Feature = {
+  id: string;
+  label: string;
+  icon: keyof typeof MaterialIcons.glyphMap;
+};
+
+const PetFeatureMenu: React.FC<PetFeatureMenuProps> = ({ onFeaturePress, _pet }) => {
+  const features: Feature[] = [
     { id: 'weight-tracker', label: 'Weight Tracker', icon: 'monitor-weight' },
     { id: 'medical-records', label: 'Medical Records', icon: 'medical-services' },
     { id: 'mood-tracker', label: 'Mood Tracker', icon: 'sentiment-satisfied' },
@@ -27,9 +34,9 @@ const PetFeatureMenu: React.FC<PetFeatureMenuProps> = ({ pet, onFeaturePress }) 
           style={styles.featureButton}
           onPress={() => onFeaturePress(feature.id)}
         >
-          <MaterialIcons name={feature.icon as any} size={24} color={colors.primary.DEFAULT} />
+          <MaterialIcons name={feature.icon} size={24} color={getColor.primary()} />
           <Text style={styles.featureText}>{feature.label}</Text>
-          <MaterialIcons name="chevron-right" size={24} color={colors.text.light} />
+          <MaterialIcons name="chevron-right" size={24} color={getColor.textLight()} />
         </TouchableOpacity>
       ))}
     </View>
@@ -38,7 +45,7 @@ const PetFeatureMenu: React.FC<PetFeatureMenuProps> = ({ pet, onFeaturePress }) 
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.white,
+    backgroundColor: getColor.background(),
     borderRadius: 12,
     padding: 16,
     marginTop: 8,
@@ -48,13 +55,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
+    borderBottomColor: getColor.borderLight(),
   },
   featureText: {
     flex: 1,
     marginLeft: 12,
     fontSize: 16,
-    color: colors.text.primary,
+    color: getColor.text(),
   },
 });
 

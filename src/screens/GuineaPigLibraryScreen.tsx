@@ -1,5 +1,5 @@
 import AppHeader from '@/components/AppHeader';
-import colors from '@/theme/colors';
+import colors, { getColor } from '@/theme/colors';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -361,32 +361,9 @@ const CARE_SECTIONS: CareSection[] = [
     }
 ];
 
-const GuineaPigLibraryScreen = () => {
+const GuineaPigLibraryScreen: React.FC = () => {
     const router = useRouter();
     const insets = useSafeAreaInsets();
-
-    const handleOptionPress = (option: string) => {
-        switch (option) {
-            case 'Cage Size Calculator':
-                router.push('/cage-calculator');
-                break;
-            case 'Housing':
-                router.push('/housing');
-                break;
-            case 'Diet & Nutrition':
-                router.push('/diet-nutrition');
-                break;
-            case 'Health & Grooming':
-                router.push('/health-grooming');
-                break;
-            case 'Exercise & Play':
-                router.push('/exercise-play');
-                break;
-            case 'Fun Facts':
-                router.push('/fun-facts');
-                break;
-        }
-    };
 
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -398,9 +375,9 @@ const GuineaPigLibraryScreen = () => {
                 </Text>
 
                 <View style={styles.gridContainer}>
-                    {CARE_SECTIONS.map((section, index) => (
+                    {CARE_SECTIONS.map((section) => (
                         <TouchableOpacity
-                            key={index}
+                            key={section.id}
                             style={styles.sectionCard}
                             onPress={() => {
                                 router.push({
@@ -413,7 +390,7 @@ const GuineaPigLibraryScreen = () => {
                                 <MaterialIcons 
                                     name="pets" 
                                     size={24} 
-                                    color={colors.buttons.brown} 
+                                    color={colors.brown} 
                                 />
                                 <Text style={styles.sectionTitle}>{section.title}</Text>
                             </View>
@@ -428,7 +405,7 @@ const GuineaPigLibraryScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.DEFAULT,
+        backgroundColor: getColor.backgroundLight(),
     },
     content: {
         flex: 1,
@@ -436,7 +413,7 @@ const styles = StyleSheet.create({
     },
     introduction: {
         fontSize: 16,
-        color: colors.text.primary,
+        color: getColor.text(),
         lineHeight: 24,
         marginBottom: 20,
     },
@@ -448,12 +425,12 @@ const styles = StyleSheet.create({
     },
     sectionCard: {
         width: '48%',
-        backgroundColor: colors.background.card,
+        backgroundColor: getColor.white(),
         borderRadius: 12,
         padding: 16,
         marginBottom: 16,
         elevation: 2,
-        shadowColor: '#000',
+        shadowColor: getColor.shadow(),
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -466,54 +443,9 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: colors.buttons.brown,
+        color: colors.brown,
         textAlign: 'center',
         marginTop: 12,
-    },
-    section: {
-        marginBottom: 24,
-    },
-    sectionHeader: {
-        marginBottom: 16,
-    },
-    card: {
-        backgroundColor: colors.background.card,
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    cardTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: colors.text.primary,
-        marginBottom: 12,
-    },
-    cardContent: {
-        gap: 8,
-    },
-    bulletPoint: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        gap: 8,
-    },
-    bullet: {
-        fontSize: 16,
-        color: colors.text.secondary,
-        marginTop: 2,
-    },
-    bulletText: {
-        flex: 1,
-        fontSize: 14,
-        color: colors.text.secondary,
-        lineHeight: 20,
     },
 });
 

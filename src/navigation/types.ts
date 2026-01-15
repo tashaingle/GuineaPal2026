@@ -1,3 +1,4 @@
+import { BondingSession } from '@/types/bonding';
 import type {
     DietPreferences,
     FeedingSchedule,
@@ -19,23 +20,12 @@ import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export type {
-    DietPreferences,
+    BondingSession, DietPreferences,
     FeedingSchedule, Gender, GuineaPig, HealthRecord,
     Medication, Mood, MoodEntry, PeeColor, PoopColor, PoopConsistency, VetAppointment, WasteLog, WasteType, WeightRecord
 };
 
 export type HealthTabType = 'weight' | 'medication' | 'appointments' | 'notes' | 'waste';
-
-export interface BondingSession {
-  id: string;
-  date: string;
-  duration: number; // in minutes
-  pets: string[]; // array of pet IDs
-  location: 'floor' | 'cage' | 'playpen' | 'outside';
-  notes?: string;
-  success: 'good' | 'neutral' | 'challenging';
-  behaviors: string[]; // observed behaviors
-}
 
 export type RootStackParamList = {
   '(tabs)': undefined;
@@ -93,7 +83,6 @@ export type RootStackParamList = {
   'care-schedule': {
     petId: string;
   };
-  'achievements': undefined;
   'bonding-timer': {
     pets?: string[];
   };

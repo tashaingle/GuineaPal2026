@@ -1,8 +1,8 @@
+import SymptomCheckerScreen from '@/screens/SymptomCheckerScreen';
 import { Stack } from 'expo-router/stack';
 import React from 'react';
-import SymptomCheckerScreen from '../../src/screens/SymptomCheckerScreen';
 
-export default function SymptomChecker() {
+export default function SymptomChecker(): JSX.Element {
   return (
     <>
       <Stack.Screen

@@ -21,7 +21,7 @@ export function IconSymbol({
   size?: number;
   color: string;
   style?: StyleProp<TextStyle>;
-}) {
+}): React.JSX.Element {
   return (
     <MaterialIcons
       name={MAPPING[name]}

@@ -1,8 +1,18 @@
 import FunFactsScreen from '@/screens/FunFactsScreen';
-import { useLocalSearchParams } from 'expo-router';
+import { Stack } from 'expo-router/stack';
 import React from 'react';
 
-export default function FunFactsRoute() {
-  const params = useLocalSearchParams();
-  return <FunFactsScreen />;
-} 
+export default function FunFacts(): JSX.Element {
+    return (
+        <>
+            <Stack.Screen
+                options={{
+                    headerShown: false
+                }}
+            />
+            <FunFactsScreen />
+        </>
+    );
+}
+
+FunFacts.displayName = 'FunFacts'; 

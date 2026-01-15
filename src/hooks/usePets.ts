@@ -1,18 +1,19 @@
 import { PetContext } from '@/contexts/PetContext';
-import { GuineaPig } from '@/types/guineaPig';
+import { Pet } from '@/types/pet';
 import { useContext } from 'react';
 
 export interface PetContextType {
-  pets: GuineaPig[];
+  pets: Pet[];
   loading: boolean;
-  error: string | null;
-  addPet: (pet: GuineaPig) => void;
-  updatePet: (pet: GuineaPig) => void;
-  deletePet: (id: string) => void;
+  error: Error | null;
+  addPet: (pet: Pet) => Promise<void>;
+  updatePet: (pet: Pet) => Promise<void>;
+  deletePet: (id: string) => Promise<void>;
+  getPet: (id: string) => Pet | undefined;
   savePets: () => Promise<void>;
 }
 
-export const usePets = () => {
+export const usePets = (): PetContextType => {
   const context = useContext(PetContext);
   if (!context) {
     throw new Error('usePets must be used within a PetProvider');

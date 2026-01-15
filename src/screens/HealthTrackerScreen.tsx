@@ -1,10 +1,10 @@
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import AppHeader from '@/components/AppHeader';
+import colors, { getColor } from '@/theme/colors';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    ActivityIndicatorProps,
     FlatList,
     StyleSheet,
     Text,
@@ -17,58 +17,54 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 interface HealthRecord {
   id: string;
   date: string;
-  type: 'weight' | 'symptom' | 'vet';
+  type: 'weight' | 'symptom' | 'vet' | 'note';
   value: string;
   notes: string;
 }
 
-const HealthTrackerScreen = () => {
-  const router = useRouter();
+type HealthTabType = 'weight' | 'symptom' | 'vet' | 'note';
+
+const HealthTrackerScreen: React.FC = (): JSX.Element => {
   const params = useLocalSearchParams();
-  const petId = params.petId as string;
+  const [selectedTab, setSelectedTab] = useState<HealthTabType>('weight');
   const [records, setRecords] = useState<HealthRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'weight' | 'symptom' | 'vet'>('weight');
-  const [value, setValue] = useState('');
+  const [newRecord, setNewRecord] = useState<Partial<HealthRecord>>({});
   const [notes, setNotes] = useState('');
   const insets = useSafeAreaInsets();
 
   // Load records when component mounts
   useEffect(() => {
-    const loadRecords = async () => {
+    const loadRecords = async (): Promise<void> => {
       try {
-        const saved = await AsyncStorage.getItem(`@guineapal_health_records_${petId}`);
+        const saved = await AsyncStorage.getItem(`@guineapal_health_records_${params.petId}`);
         if (saved) setRecords(JSON.parse(saved));
       } catch (e) {
         console.error('Failed to load records', e);
-      } finally {
-        setIsLoading(false);
       }
     };
     loadRecords();
-  }, [petId]);
+  }, [params.petId]);
 
   // Save records whenever they change
   useEffect(() => {
-    AsyncStorage.setItem(`@guineapal_health_records_${petId}`, JSON.stringify(records));
-  }, [records, petId]);
+    AsyncStorage.setItem(`@guineapal_health_records_${params.petId}`, JSON.stringify(records));
+  }, [records, params.petId]);
 
-  const addRecord = () => {
-    if (!value) return;
-    const newRecord: HealthRecord = {
+  const addRecord = (): void => {
+    if (!newRecord.value) return;
+    const newHealthRecord: HealthRecord = {
       id: Date.now().toString(),
       date: new Date().toLocaleDateString(),
-      type: activeTab,
-      value: value,
+      type: selectedTab,
+      value: newRecord.value,
       notes: notes,
     };
-    setRecords([newRecord, ...records]);
-    setValue('');
+    setRecords([newHealthRecord, ...records]);
+    setNewRecord({});
     setNotes('');
   };
 
-  const renderItem = ({ item }: { item: HealthRecord }) => (
+  const renderItem = ({ item }: { item: HealthRecord }): JSX.Element => (
     <Card style={styles.card}>
       <Card.Content>
         <View style={styles.recordHeader}>
@@ -78,7 +74,7 @@ const HealthTrackerScreen = () => {
               item.type === 'symptom' ? 'alert-circle' : 'medical-bag'
             }
             size={24}
-            color="#5D4037"
+            color={colors.brown}
           />
           <Text style={styles.recordDate}>{item.date}</Text>
         </View>
@@ -88,80 +84,41 @@ const HealthTrackerScreen = () => {
     </Card>
   );
 
-  if (isLoading) {
-    return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size={'large' as ActivityIndicatorProps['size']} color="#5D4037" />
-        </View>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.errorContainer}>
-          <MaterialIcons name="error-outline" size={48} color="#D32F2F" />
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={() => {
-              console.log('Retry button pressed');
-              // Implement retry logic here
-            }}
-          >
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.headerContainer}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-          testID="back-button"
-        >
-          <MaterialIcons name="arrow-back" size={24} color="#5D4037" />
-        </TouchableOpacity>
-        <Text style={styles.header}>Health Tracker</Text>
-      </View>
+      <AppHeader title="Health Tracker" />
 
       <View style={styles.tabs}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'weight' && styles.activeTab]}
-          onPress={() => setActiveTab('weight')}
+          style={[styles.tab, selectedTab === 'weight' && styles.activeTab]}
+          onPress={() => setSelectedTab('weight')}
         >
-          <MaterialCommunityIcons name="scale" size={24} color="#5D4037" />
+          <MaterialCommunityIcons name="scale" size={24} color={colors.brown} />
           <Text>Weight</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'symptom' && styles.activeTab]}
-          onPress={() => setActiveTab('symptom')}
+          style={[styles.tab, selectedTab === 'symptom' && styles.activeTab]}
+          onPress={() => setSelectedTab('symptom')}
         >
-          <MaterialCommunityIcons name="alert-circle" size={24} color="#5D4037" />
+          <MaterialCommunityIcons name="alert-circle" size={24} color={colors.brown} />
           <Text>Symptoms</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'vet' && styles.activeTab]}
-          onPress={() => setActiveTab('vet')}
+          style={[styles.tab, selectedTab === 'vet' && styles.activeTab]}
+          onPress={() => setSelectedTab('vet')}
         >
-          <MaterialCommunityIcons name="medical-bag" size={24} color="#5D4037" />
+          <MaterialCommunityIcons name="medical-bag" size={24} color={colors.brown} />
           <Text>Vet Visits</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.form}>
         <TextInput
-          label={activeTab === 'weight' ? 'Weight (g)' : activeTab === 'symptom' ? 'Symptom' : 'Vet Visit Details'}
-          value={value}
-          onChangeText={setValue}
+          label={selectedTab === 'weight' ? 'Weight (g)' : selectedTab === 'symptom' ? 'Symptom' : 'Vet Visit Details'}
+          value={newRecord.value}
+          onChangeText={(value) => setNewRecord({ ...newRecord, value })}
           style={styles.input}
-          keyboardType={activeTab === 'weight' ? 'numeric' : 'default'}
+          keyboardType={selectedTab === 'weight' ? 'numeric' : 'default'}
         />
         <TextInput
           label="Notes"
@@ -175,12 +132,12 @@ const HealthTrackerScreen = () => {
           onPress={addRecord}
           style={styles.button}
         >
-          Add Record
+          <Text>Add Record</Text>
         </Button>
       </View>
 
       <FlatList
-        data={records.filter(record => record.type === activeTab)}
+        data={records.filter(record => record.type === selectedTab)}
         renderItem={renderItem}
         keyExtractor={item => item.id}
         style={styles.list}
@@ -193,37 +150,7 @@ const HealthTrackerScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF8E1',
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    paddingTop: 8,
-    backgroundColor: '#FFF8E1',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  backButton: {
-    position: 'absolute',
-    left: 16,
-    top: 8,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  header: {
-    flex: 1,
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#5D4037',
-    textAlign: 'center',
-  },
-  content: {
-    flex: 1,
-    padding: 16,
+    backgroundColor: getColor.backgroundLight(),
   },
   tabs: {
     flexDirection: 'row',
@@ -234,10 +161,10 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: 'center',
     borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    borderBottomColor: getColor.transparent(),
   },
   activeTab: {
-    borderBottomColor: '#5D4037',
+    borderBottomColor: colors.brown,
   },
   form: {
     marginBottom: 20,
@@ -245,18 +172,25 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 12,
-    backgroundColor: 'white',
+    backgroundColor: getColor.background(),
   },
   button: {
     marginTop: 8,
-    backgroundColor: '#5D4037',
+    backgroundColor: colors.brown,
   },
   list: {
     paddingHorizontal: 16,
   },
   card: {
-    marginBottom: 12,
-    backgroundColor: 'white',
+    backgroundColor: getColor.cardBackground(),
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: getColor.shadow(),
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   recordHeader: {
     flexDirection: 'row',
@@ -265,46 +199,17 @@ const styles = StyleSheet.create({
   },
   recordDate: {
     marginLeft: 8,
-    color: '#757575',
+    color: getColor.textLight(),
   },
   recordValue: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 4,
-    color: '#212121',
+    color: getColor.text(),
   },
   recordNotes: {
-    color: '#616161',
+    color: getColor.textLight(),
     fontStyle: 'italic',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#D32F2F',
-    textAlign: 'center',
-    marginTop: 12,
-    marginBottom: 24,
-  },
-  retryButton: {
-    backgroundColor: '#5D4037',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
 

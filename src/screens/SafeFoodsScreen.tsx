@@ -1,7 +1,6 @@
 import AppHeader from '@/components/AppHeader';
-import colors from '@/theme/colors';
+import { getColor } from '@/theme/colors';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Card, Text } from 'react-native-paper';
@@ -72,8 +71,7 @@ const FOOD_GUIDE = {
   ],
 };
 
-const SafeFoodsScreen = () => {
-  const router = useRouter();
+const SafeFoodsScreen = (): JSX.Element => {
   const insets = useSafeAreaInsets();
 
   return (
@@ -84,15 +82,15 @@ const SafeFoodsScreen = () => {
         <Card style={styles.card}>
           <Card.Content>
             <View style={styles.cardHeader}>
-              <MaterialIcons name="check-circle" size={24} color={colors.primary.DEFAULT} />
+              <MaterialIcons name="check-circle" size={24} color={getColor.primary()} />
               <Text style={styles.cardTitle}>Safe Foods</Text>
             </View>
             {Object.entries(FOOD_GUIDE.safe).map(([category, foods]) => (
               <View key={category}>
                 <Text style={styles.categoryTitle}>{category}</Text>
-                {foods.map((food, index) => (
-                  <View key={index} style={styles.foodItem}>
-                    <MaterialIcons name="fiber-manual-record" size={8} color={colors.primary.DEFAULT} />
+                {foods.map((food) => (
+                  <View key={`${category}-${food}`} style={styles.foodItem}>
+                    <MaterialIcons name="fiber-manual-record" size={8} color={getColor.primary()} />
                     <Text style={styles.foodText}>{food}</Text>
                   </View>
                 ))}
@@ -105,15 +103,15 @@ const SafeFoodsScreen = () => {
         <Card style={styles.card}>
           <Card.Content>
             <View style={styles.cardHeader}>
-              <MaterialIcons name="warning" size={24} color={colors.buttons.red} />
-              <Text style={[styles.cardTitle, { color: colors.buttons.red }]}>Unsafe Foods</Text>
+              <MaterialIcons name="warning" size={24} color={getColor.buttonRed()} />
+              <Text style={[styles.cardTitle, { color: getColor.buttonRed() }]}>Unsafe Foods</Text>
             </View>
             {Object.entries(FOOD_GUIDE.unsafe).map(([category, foods]) => (
               <View key={category}>
                 <Text style={styles.categoryTitle}>{category}</Text>
-                {foods.map((food, index) => (
-                  <View key={index} style={styles.foodItem}>
-                    <MaterialIcons name="fiber-manual-record" size={8} color={colors.buttons.red} />
+                {foods.map((food) => (
+                  <View key={`${category}-${food}`} style={styles.foodItem}>
+                    <MaterialIcons name="fiber-manual-record" size={8} color={getColor.buttonRed()} />
                     <Text style={styles.foodText}>{food}</Text>
                   </View>
                 ))}
@@ -126,12 +124,12 @@ const SafeFoodsScreen = () => {
         <Card style={styles.card}>
           <Card.Content>
             <View style={styles.cardHeader}>
-              <MaterialIcons name="info" size={24} color={colors.primary.DEFAULT} />
+              <MaterialIcons name="info" size={24} color={getColor.primary()} />
               <Text style={styles.cardTitle}>Important Notes</Text>
             </View>
-            {FOOD_GUIDE.notes.map((note, index) => (
-              <View key={index} style={styles.noteItem}>
-                <MaterialIcons name="fiber-manual-record" size={8} color={colors.primary.DEFAULT} />
+            {FOOD_GUIDE.notes.map((note) => (
+              <View key={`note-${note}`} style={styles.noteItem}>
+                <MaterialIcons name="fiber-manual-record" size={8} color={getColor.primary()} />
                 <Text style={styles.noteText}>{note}</Text>
               </View>
             ))}
@@ -145,7 +143,7 @@ const SafeFoodsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.DEFAULT,
+    backgroundColor: getColor.backgroundLight(),
   },
   content: {
     flex: 1,
@@ -153,10 +151,10 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: 16,
-    backgroundColor: colors.background.card,
+    backgroundColor: getColor.white(),
     borderRadius: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: getColor.shadow(),
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -170,12 +168,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginLeft: 8,
-    color: colors.primary.DEFAULT,
+    color: getColor.primary(),
   },
   categoryTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.primary.DEFAULT,
+    color: getColor.primary(),
     marginTop: 12,
     marginBottom: 8,
   },
@@ -187,7 +185,7 @@ const styles = StyleSheet.create({
   },
   foodText: {
     fontSize: 16,
-    color: colors.text.primary,
+    color: getColor.text(),
     marginLeft: 8,
     flex: 1,
   },
@@ -199,7 +197,7 @@ const styles = StyleSheet.create({
   },
   noteText: {
     fontSize: 16,
-    color: colors.text.primary,
+    color: getColor.text(),
     marginLeft: 8,
     flex: 1,
   },

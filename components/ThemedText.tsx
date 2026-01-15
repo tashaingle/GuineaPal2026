@@ -1,6 +1,7 @@
+import React from 'react';
 import { StyleSheet, Text, type TextProps } from 'react-native';
-
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useThemeColor } from '../hooks/useThemeColor';
+import { getColor } from '../src/theme/colors';
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
@@ -8,13 +9,15 @@ export type ThemedTextProps = TextProps & {
   type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
 };
 
-export function ThemedText({
-  style,
-  lightColor,
-  darkColor,
-  type = 'default',
-  ...rest
-}: ThemedTextProps) {
+export function ThemedText(props: ThemedTextProps): React.JSX.Element {
+  const {
+    style,
+    lightColor,
+    darkColor,
+    type = 'default',
+    ...rest
+  } = props;
+
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
 
   return (
@@ -55,6 +58,6 @@ const styles = StyleSheet.create({
   link: {
     lineHeight: 30,
     fontSize: 16,
-    color: '#0a7ea4',
+    color: getColor.primary(),
   },
 });

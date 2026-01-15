@@ -1,5 +1,5 @@
 import AppHeader from '@/components/AppHeader';
-import colors from '@/theme/colors';
+import { getColor } from '@/theme/colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -13,7 +13,7 @@ interface Contact {
   relationship: string;
 }
 
-export default function AddEmergencyContactScreen() {
+const AddEmergencyContactScreen = (): JSX.Element => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
@@ -32,7 +32,7 @@ export default function AddEmergencyContactScreen() {
     }
   }, [isEditing, params.contact]);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (!name.trim() || !phone.trim() || !relationship.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -71,7 +71,7 @@ export default function AddEmergencyContactScreen() {
         [
           {
             text: 'OK',
-            onPress: () => {
+            onPress: (): void => {
               router.back();
             }
           }
@@ -105,7 +105,7 @@ export default function AddEmergencyContactScreen() {
                 value={name}
                 onChangeText={setName}
                 placeholder="Enter name"
-                placeholderTextColor={colors.text.secondary}
+                placeholderTextColor={getColor.inputPlaceholder()}
               />
             </View>
 
@@ -116,7 +116,7 @@ export default function AddEmergencyContactScreen() {
                 value={phone}
                 onChangeText={setPhone}
                 placeholder="Enter phone number"
-                placeholderTextColor={colors.text.secondary}
+                placeholderTextColor={getColor.inputPlaceholder()}
                 keyboardType="phone-pad"
               />
             </View>
@@ -128,7 +128,7 @@ export default function AddEmergencyContactScreen() {
                 value={relationship}
                 onChangeText={setRelationship}
                 placeholder="Enter relationship (e.g., Primary Vet)"
-                placeholderTextColor={colors.text.secondary}
+                placeholderTextColor={getColor.inputPlaceholder()}
               />
             </View>
           </View>
@@ -147,12 +147,12 @@ export default function AddEmergencyContactScreen() {
       </KeyboardAvoidingView>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.DEFAULT,
+    backgroundColor: getColor.backgroundLight(),
   },
   keyboardAvoid: {
     flex: 1,
@@ -164,10 +164,10 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   formContainer: {
-    backgroundColor: colors.background.card,
+    backgroundColor: getColor.cardBackground(),
     borderRadius: 12,
     padding: 16,
-    shadowColor: colors.shadow.DEFAULT,
+    shadowColor: getColor.shadow(),
     shadowOffset: {
       width: 0,
       height: 2,
@@ -182,30 +182,30 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.text.secondary,
+    color: getColor.textLight(),
     marginBottom: 8,
   },
   input: {
-    backgroundColor: colors.background.DEFAULT,
+    backgroundColor: getColor.inputBackground(),
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: colors.text.primary,
+    color: getColor.text(),
     borderWidth: 1,
-    borderColor: colors.border.DEFAULT,
+    borderColor: getColor.inputBorder(),
   },
   footer: {
-    backgroundColor: colors.background.DEFAULT,
+    backgroundColor: getColor.backgroundLight(),
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: colors.border.DEFAULT,
+    borderTopColor: getColor.border(),
   },
   saveButton: {
-    backgroundColor: colors.primary.DEFAULT,
+    backgroundColor: getColor.primary(),
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
-    shadowColor: colors.shadow.DEFAULT,
+    shadowColor: getColor.shadow(),
     shadowOffset: {
       width: 0,
       height: 2,
@@ -215,8 +215,10 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   saveButtonText: {
-    color: colors.background.card,
+    color: getColor.background(),
     fontSize: 16,
     fontWeight: '600',
   },
-}); 
+});
+
+export default AddEmergencyContactScreen; 

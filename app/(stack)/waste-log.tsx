@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import React from 'react';
 
-export default function WasteLogRoute() {
+export default function WasteLog(): JSX.Element {
   const params = useLocalSearchParams();
   
   return (

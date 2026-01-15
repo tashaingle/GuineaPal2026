@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 type ErrorHandler = (error: Error) => void;
 
-export function useErrorHandler(handler?: ErrorHandler) {
+export const useErrorHandler = (handler?: ErrorHandler): (error: Error) => void => {
   return useCallback(
     (error: Error) => {
       // Log the error
@@ -18,4 +18,4 @@ export function useErrorHandler(handler?: ErrorHandler) {
     },
     [handler]
   );
-} 
+}; 

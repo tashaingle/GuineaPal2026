@@ -1,25 +1,28 @@
-import { Ionicons } from '@expo/vector-icons';
+import { getColor } from '@/theme/colors';
+import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
-type IconSymbolProps = {
-  name: keyof typeof Ionicons.glyphMap;
+interface IconSymbolProps {
+  name: keyof typeof MaterialIcons.glyphMap;
   size?: number;
   color?: string;
-  style?: any;
-};
+  style?: StyleProp<ViewStyle>;
+}
 
-export function IconSymbol({ name, size = 24, color = '#000', style }: IconSymbolProps) {
+const IconSymbol = ({ name, size = 24, color = getColor.text(), style }: IconSymbolProps): JSX.Element => {
   return (
     <View style={[styles.container, style]}>
-      <Ionicons name={name} size={size} color={color} />
+      <MaterialIcons name={name} size={size} color={color} />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-}); 
+});
+
+export default IconSymbol; 

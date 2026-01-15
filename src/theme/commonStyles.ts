@@ -1,109 +1,169 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native';
-import colors from './colors';
-import typography from './typography';
+import { getColor } from './colors';
+import { typography } from './typography';
 
 type Style = ViewStyle | TextStyle;
 type StyleMap = { [key: string]: Style };
 
 export const commonStyles = StyleSheet.create({
-  // Screen containers
+  // Screen containers - match welcome screen
   screenContainer: {
     flex: 1,
-    backgroundColor: colors.background.DEFAULT,
+    backgroundColor: getColor.backgroundLight(),
   } as ViewStyle,
   contentContainer: {
     flex: 1,
-    padding: 16,
+    padding: 12,
   } as ViewStyle,
 
-  // Headers
+  // Headers - match welcome screen header style
   header: {
-    backgroundColor: colors.components.header.background,
+    backgroundColor: getColor.white(),
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border.DEFAULT,
+    borderBottomColor: getColor.border(),
+    marginHorizontal: 16,
+    marginTop: 8,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: getColor.shadow(),
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   } as ViewStyle,
   headerTitle: {
-    ...typography.textStyles.h2,
-    color: colors.components.header.text,
+    fontSize: 24,
+    fontWeight: '600',
+    color: getColor.text(),
     textAlign: 'center',
   } as TextStyle,
 
-  // Cards
+  // Cards - match welcome screen card style
   card: {
-    backgroundColor: colors.components.card.background,
+    backgroundColor: getColor.white(),
     borderRadius: 12,
     padding: 16,
     marginVertical: 8,
-    borderWidth: 1,
-    borderColor: colors.components.card.border,
-    shadowColor: colors.components.card.shadow,
+    elevation: 2,
+    shadowColor: getColor.shadow(),
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
   } as ViewStyle,
   cardTitle: {
-    ...typography.textStyles.h3,
-    color: colors.text.primary,
+    fontSize: 18,
+    fontWeight: '600',
+    color: getColor.text(),
     marginBottom: 8,
   } as TextStyle,
   cardContent: {
-    ...typography.textStyles.body,
-    color: colors.text.secondary,
+    fontSize: 16,
+    color: getColor.textSecondary(),
   } as TextStyle,
 
-  // Buttons
+  // Buttons - match welcome screen button style
   button: {
-    backgroundColor: colors.buttons.primary,
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: getColor.white(),
+    borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 2,
+    shadowColor: getColor.shadow(),
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   } as ViewStyle,
   buttonText: {
-    ...typography.textStyles.button,
-    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+    color: getColor.text(),
   } as TextStyle,
   buttonOutline: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: colors.buttons.primary,
+    borderColor: getColor.border(),
   } as ViewStyle,
   buttonOutlineText: {
-    ...typography.textStyles.button,
-    color: colors.buttons.primary,
+    fontSize: 16,
+    fontWeight: '600',
+    color: getColor.text(),
   } as TextStyle,
 
-  // Form inputs
+  // Form inputs - match welcome screen style
   input: {
-    backgroundColor: colors.components.input.background,
+    backgroundColor: getColor.white(),
     borderWidth: 1,
-    borderColor: colors.components.input.border,
-    borderRadius: 8,
-    padding: 12,
-    ...typography.textStyles.body,
-    color: colors.text.primary,
-  } as TextStyle,
-  inputLabel: {
-    ...typography.textStyles.label,
-    color: colors.text.primary,
-    marginBottom: 4,
+    borderColor: getColor.border(),
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: getColor.text(),
+    elevation: 1,
+    shadowColor: getColor.shadow(),
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   } as TextStyle,
 
   // Lists
   listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: getColor.white(),
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
-    backgroundColor: colors.white,
+    borderBottomColor: getColor.border(),
+    elevation: 1,
+    shadowColor: getColor.shadow(),
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   } as ViewStyle,
-  listItemText: {
-    ...typography.textStyles.body,
-    color: colors.text.primary,
+
+  // Modals
+  modalOverlay: {
+    backgroundColor: getColor.overlay(),
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  } as ViewStyle,
+  modalContent: {
+    backgroundColor: getColor.white(),
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
+    elevation: 3,
+    shadowColor: getColor.shadow(),
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+  } as ViewStyle,
+
+  // Grid layout (like welcome screen)
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+    flex: 1,
+  } as ViewStyle,
+  gridItem: {
+    flex: 1,
+    backgroundColor: getColor.white(),
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    elevation: 2,
+    shadowColor: getColor.shadow(),
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  } as ViewStyle,
+  gridItemText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: getColor.text(),
+    textAlign: 'center',
   } as TextStyle,
 
   // Status indicators
@@ -115,14 +175,10 @@ export const commonStyles = StyleSheet.create({
   } as ViewStyle,
   badgeText: {
     ...typography.textStyles.caption,
-    color: colors.white,
+    color: getColor.background(),
   } as TextStyle,
 
   // Utility styles
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  } as ViewStyle,
   spaceBetween: {
     justifyContent: 'space-between',
   } as ViewStyle,

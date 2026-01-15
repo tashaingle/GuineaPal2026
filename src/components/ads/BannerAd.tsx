@@ -1,6 +1,7 @@
-import { AdMobBanner } from 'expo-ads-admob';
+import { AdError, BannerAdComponentProps, BannerAdProps, BannerAdSizeType } from '@/types/ads';
+import Constants from 'expo-constants';
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 
 // Ad unit IDs
 const adUnitIds = {
@@ -10,26 +11,36 @@ const adUnitIds = {
   }) || 'ca-app-pub-3940256099942544/6300978111', // Fallback to Android test ID
 };
 
-// Banner ad component props
-interface BannerAdProps {
-  size?: 'banner' | 'largeBanner' | 'mediumRectangle' | 'fullBanner' | 'leaderboard' | 'smartBannerPortrait' | 'smartBannerLandscape';
-  style?: any;
+// Try to import react-native-google-mobile-ads
+let BannerAd: React.ComponentType<BannerAdProps> | null = null;
+let BannerAdSize: Record<string, BannerAdSizeType> | null = null;
+
+try {
+  const adsModule = require('react-native-google-mobile-ads');
+  BannerAd = adsModule.BannerAd;
+  BannerAdSize = adsModule.BannerAdSize;
+} catch (error) {
+  console.warn('react-native-google-mobile-ads not available:', error);
 }
 
 // Banner ad component
-export const BannerAd: React.FC<BannerAdProps> = ({ size = 'banner', style }) => {
-  // Skip ads in development
-  if (__DEV__) {
+export const BannerAdComponent: React.FC<BannerAdComponentProps> = ({ size = BannerAdSize?.BANNER || 'BANNER', style }) => {
+  // Skip ads in development, Expo Go, or if module not available
+  if (__DEV__ || Constants.appOwnership === 'expo' || !BannerAd) {
     return null;
   }
 
   return (
-    <AdMobBanner
-      bannerSize={size}
-      adUnitID={adUnitIds.banner}
-      servePersonalizedAds={true}
-      onDidFailToReceiveAdWithError={(error) => console.warn('Banner ad failed to load:', error)}
-      style={style}
-    />
+    <View style={style}>
+      <BannerAd
+        unitId={adUnitIds.banner}
+        size={size}
+        requestOptions={{
+          requestNonPersonalizedAdsOnly: false,
+          keywords: ['pets', 'guinea pigs', 'animals'],
+        }}
+        onAdFailedToLoad={(error: AdError) => console.warn('Banner ad failed to load:', error)}
+      />
+    </View>
   );
 }; 

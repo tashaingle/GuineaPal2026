@@ -2,7 +2,7 @@ import MedicalRecordsScreen from '@/screens/health/MedicalRecordsScreen';
 import { Stack } from 'expo-router/stack';
 import React from 'react';
 
-export default function MedicalRecordsRoute() {
+export default function MedicalRecordsRoute(): JSX.Element {
   return (
     <>
       <Stack.Screen

@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import React from 'react';
 
-export default function ForgotPasswordRoute() {
+export default function ForgotPasswordRoute(): JSX.Element {
   const router = useRouter();
 
   return (

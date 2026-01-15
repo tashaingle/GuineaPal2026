@@ -1,3 +1,4 @@
+
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -12,17 +13,18 @@ import {
 } from 'react-native';
 import { Button, TextInput } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getColor } from '../../theme/colors';
 
 interface Props {
   router: ReturnType<typeof useRouter>;
 }
 
-const ForgotPasswordScreen = ({ router }: Props) => {
+const ForgotPasswordScreen = ({ router }: Props): JSX.Element => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const insets = useSafeAreaInsets();
 
-  const handleResetPassword = async () => {
+  const handleResetPassword = async (): Promise<void> => {
     if (!email.trim()) {
       Alert.alert('Error', 'Please enter your email address');
       return;
@@ -34,7 +36,7 @@ const ForgotPasswordScreen = ({ router }: Props) => {
       Alert.alert(
         'Success',
         'If an account exists with this email, you will receive password reset instructions.',
-        [{ text: 'OK', onPress: () => router.back() }]
+        [{ text: 'OK', onPress: (): void => router.back() }]
       );
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Failed to send reset instructions');
@@ -53,7 +55,7 @@ const ForgotPasswordScreen = ({ router }: Props) => {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <MaterialIcons name="arrow-back" size={24} color="#5D4037" />
+          <MaterialIcons name="arrow-back" size={24} color={getColor.secondary()} />
         </TouchableOpacity>
         <Text style={styles.title}>Reset Password</Text>
       </View>
@@ -71,7 +73,7 @@ const ForgotPasswordScreen = ({ router }: Props) => {
           keyboardType="email-address"
           style={styles.input}
           mode="outlined"
-          left={<TextInput.Icon icon="email" color="#5D4037" />}
+          left={<TextInput.Icon icon="email" color={getColor.secondary()} />}
         />
 
         <Button
@@ -82,7 +84,7 @@ const ForgotPasswordScreen = ({ router }: Props) => {
           style={styles.resetButton}
           contentStyle={styles.resetButtonContent}
         >
-          Send Reset Instructions
+          <Text>Send Reset Instructions</Text>
         </Button>
 
         <TouchableOpacity
@@ -99,7 +101,7 @@ const ForgotPasswordScreen = ({ router }: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF8E1',
+    backgroundColor: getColor.backgroundLight(),
   },
   header: {
     flexDirection: 'row',
@@ -112,23 +114,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#5D4037',
+    color: getColor.secondary(),
   },
   content: {
     padding: 24,
   },
   description: {
     fontSize: 16,
-    color: '#795548',
+    color: getColor.secondary(),
     marginBottom: 24,
     lineHeight: 24,
   },
   input: {
     marginBottom: 24,
-    backgroundColor: 'white',
+    backgroundColor: getColor.background(),
   },
   resetButton: {
-    backgroundColor: '#5D4037',
+    backgroundColor: getColor.secondary(),
   },
   resetButtonContent: {
     paddingVertical: 8,
@@ -138,7 +140,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   loginButtonText: {
-    color: '#5D4037',
+    color: getColor.secondary(),
     fontSize: 16,
     fontWeight: '600',
   },

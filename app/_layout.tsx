@@ -1,104 +1,93 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { PetProvider } from '@/contexts/PetContext';
+import { PremiumProvider } from '@/contexts/PremiumContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import { cleanupApp, initializeApp } from '@/utils/initializeApp';
+import { AntDesign, FontAwesome, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
-import { Slot } from 'expo-router';
-import { useRouter, useSegments } from 'expo-router/build/hooks';
+import { Slot, useRouter } from 'expo-router';
+import { useSegments } from 'expo-router/build/hooks';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
-import * as IAP from 'react-native-iap';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { BreedProvider } from '../src/context/BreedContext';
-import { PetProvider } from '../src/context/PetContext';
-import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
-import { PremiumProvider } from '../src/contexts/PremiumContext';
-import { initializeAds } from '../src/utils/ads';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
-function RootLayoutNav() {
-  const { user, isLoading } = useAuth();
-  const segments = useSegments();
-  const router = useRouter();
+function RootLayoutNav(): React.JSX.Element {
+    const { user, isLoading } = useAuth();
+    const segments = useSegments();
+    const router = useRouter();
 
-  useEffect(() => {
-    if (isLoading) return;
+    useEffect(() => {
+        if (isLoading) return;
 
-    // Check if we're in the auth group
-    const inAuthGroup = segments[0] === '(auth)';
+        // Check if we're in the auth group
+        const inAuthGroup = segments[0] === '(auth)';
 
-    // If we're not authenticated and not in the auth group, redirect to login
-    if (!user && !inAuthGroup) {
-      router.replace('/(auth)/login');
-    }
-    // If we're authenticated and in the auth group, redirect to welcome
-    else if (user && inAuthGroup) {
-      router.replace('/(stack)/welcome');
-    }
-  }, [user, segments, isLoading]);
+        // If we're not authenticated and not in the auth group, redirect to login
+        if (!user && !inAuthGroup) {
+            router.replace('/(auth)/login');
+        }
+        // If we're authenticated and in the auth group, redirect to welcome
+        else if (user && inAuthGroup) {
+            router.replace('/(stack)/welcome');
+        }
+    }, [user, segments, isLoading]);
 
-  return <Slot />;
+    return <Slot />;
 }
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [fontsLoaded] = useFonts({
-    ...MaterialCommunityIcons.font,
-  });
+function RootLayoutContent(): React.JSX.Element | null {
+    const colorScheme = useColorScheme();
+    const [fontsLoaded] = useFonts({
+        ...MaterialCommunityIcons.font,
+        ...AntDesign.font,
+        ...MaterialIcons.font,
+        ...FontAwesome.font,
+        ...Ionicons.font,
+    });
 
-  useEffect(() => {
-    const initializeApp = async () => {
-      // Skip initialization in development
-      if (__DEV__) {
-        console.log('Skipping initialization in development environment');
-        return;
-      }
+    useEffect(() => {
+        if (fontsLoaded) {
+            SplashScreen.hideAsync();
+            initializeApp();
+        }
 
-      try {
-        // Initialize IAP
-        await IAP.initConnection();
-        console.log('IAP initialized successfully');
+        return cleanupApp;
+    }, [fontsLoaded]);
 
-        // Initialize Ads
-        await initializeAds();
-        console.log('Ads initialized successfully');
-      } catch (error) {
-        console.warn('Initialization failed:', error);
-      }
-    };
-
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-      initializeApp();
+    if (!fontsLoaded) {
+        return null;
     }
 
-    return () => {
-      if (!__DEV__) {
-        IAP.endConnection();
-      }
-    };
-  }, [fontsLoaded]);
+    return (
+        <SafeAreaProvider>
+            <PaperProvider>
+                <ThemeProvider>
+                    <PetProvider>
+                        <PremiumProvider>
+                            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+                            <RootLayoutNav />
+                        </PremiumProvider>
+                    </PetProvider>
+                </ThemeProvider>
+            </PaperProvider>
+        </SafeAreaProvider>
+    );
+}
 
-  if (!fontsLoaded) {
-    return null;
-  }
-
-  return (
-    <SafeAreaProvider>
-      <PaperProvider>
+function RootLayout(): React.JSX.Element {
+    return (
         <AuthProvider>
-          <PremiumProvider>
-            <PetProvider>
-              <BreedProvider>
-                <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-                <RootLayoutNav />
-              </BreedProvider>
-            </PetProvider>
-          </PremiumProvider>
+            <RootLayoutContent />
         </AuthProvider>
-      </PaperProvider>
-    </SafeAreaProvider>
-  );
-} 
+    );
+}
+
+RootLayout.displayName = 'RootLayout';
+
+export default RootLayout; 

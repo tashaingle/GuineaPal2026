@@ -1,8 +1,9 @@
 import AppHeader from '@/components/AppHeader';
-import colors from '@/theme/colors';
+import { SYMPTOM_DATA, SymptomData } from '@/data/symptoms';
+import { getColor } from '@/theme/colors';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import {
     ScrollView,
     StyleSheet,
@@ -12,102 +13,145 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const SymptomDetailsScreen = () => {
+const SymptomDetailsScreen = (): JSX.Element => {
     const router = useRouter();
     const params = useLocalSearchParams();
     const insets = useSafeAreaInsets();
+    const [selectedSymptom, setSelectedSymptom] = useState<SymptomData | null>(null);
 
-    const symptom = {
-        category: params.category as string || 'Unknown Category',
-        description: params.description as string || 'No description available',
-        symptoms: (params.symptoms as string || '').split(',').filter(Boolean),
-        possibleCauses: (params.possibleCauses as string || '').split(',').filter(Boolean),
-        severity: params.severity as string || 'Unknown',
-        recommendedActions: (params.recommendedActions as string || '').split(',').filter(Boolean)
+    const category = params.category as string;
+    const symptoms = SYMPTOM_DATA[category] || [];
+
+    const handleSymptomPress = (symptom: SymptomData): void => {
+        setSelectedSymptom(symptom);
     };
 
-    if (!params.category && !params.description) {
+    const handleBackToList = (): void => {
+        setSelectedSymptom(null);
+    };
+
+    if (!category || symptoms.length === 0) {
         return (
             <View style={[styles.container, { paddingTop: insets.top }]}>
-                <View style={[styles.header, { 
-                    marginTop: 8,
-                    backgroundColor: colors.background.card,
-                    elevation: 2,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 4,
-                    marginHorizontal: 16,
-                    borderRadius: 12,
-                }]}>
+                <View style={[styles.header, styles.errorHeader]}>
                     <View style={styles.headerRow}>
                         <TouchableOpacity
                             style={styles.backButton}
                             onPress={() => router.back()}
                         >
-                            <MaterialIcons name="arrow-back" size={24} color={colors.buttons.brown} />
+                            <MaterialIcons name="arrow-back" size={24} color={getColor.buttonBrown()} />
                         </TouchableOpacity>
                         <Text style={styles.headerTitle}>Error</Text>
                     </View>
                 </View>
                 <View style={styles.card}>
-                    <Text style={styles.cardText}>No symptom details available. Please try again.</Text>
+                    <Text style={styles.cardText}>No symptoms available for this category. Please try again.</Text>
                 </View>
+            </View>
+        );
+    }
+
+    if (selectedSymptom) {
+        return (
+            <View style={[styles.container, { paddingTop: insets.top }]}>
+                <View style={styles.header}>
+                    <View style={styles.headerRow}>
+                        <TouchableOpacity
+                            style={styles.backButton}
+                            onPress={handleBackToList}
+                        >
+                            <MaterialIcons name="arrow-back" size={24} color={getColor.buttonBrown()} />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>{selectedSymptom.title}</Text>
+                    </View>
+                </View>
+                <ScrollView 
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.content}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.card}>
+                        <Text style={styles.cardTitle}>Description</Text>
+                        <Text style={styles.cardText}>{selectedSymptom.description}</Text>
+                    </View>
+
+                    <View style={styles.card}>
+                        <Text style={styles.cardTitle}>Common Symptoms</Text>
+                        {selectedSymptom.symptoms.map((symptomItem) => (
+                            <View key={`symptom-${symptomItem}`} style={styles.listItem}>
+                                <MaterialIcons name="fiber-manual-record" size={8} color={getColor.primary()} style={styles.bullet} />
+                                <Text style={styles.listText}>{symptomItem}</Text>
+                            </View>
+                        ))}
+                    </View>
+
+                    <View style={styles.card}>
+                        <Text style={styles.cardTitle}>Possible Causes</Text>
+                        {selectedSymptom.possibleCauses.map((cause) => (
+                            <View key={`cause-${cause}`} style={styles.listItem}>
+                                <MaterialIcons name="fiber-manual-record" size={8} color={getColor.primary()} style={styles.bullet} />
+                                <Text style={styles.listText}>{cause}</Text>
+                            </View>
+                        ))}
+                    </View>
+
+                    <View style={styles.card}>
+                        <Text style={styles.cardTitle}>Severity</Text>
+                        <View style={[styles.severityBadge, { 
+                            backgroundColor: selectedSymptom.severity === 'High' ? getColor.primaryDark() : 
+                                           selectedSymptom.severity === 'Medium' ? getColor.buttonOrange() : getColor.buttonGreen()
+                        }]}>
+                            <Text style={styles.severityText}>{selectedSymptom.severity}</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.card}>
+                        <Text style={styles.cardTitle}>Recommended Actions</Text>
+                        {selectedSymptom.recommendedActions.map((action) => (
+                            <View key={`action-${action}`} style={styles.listItem}>
+                                <MaterialIcons name="fiber-manual-record" size={8} color={getColor.primary()} style={styles.bullet} />
+                                <Text style={styles.listText}>{action}</Text>
+                            </View>
+                        ))}
+                    </View>
+                </ScrollView>
             </View>
         );
     }
 
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
-            <AppHeader title={symptom.category} />
+            <AppHeader title={symptoms[0]?.category || 'Symptoms'} />
             <ScrollView 
                 style={styles.scrollView}
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Description</Text>
-                    <Text style={styles.cardText}>{symptom.description}</Text>
-                </View>
+                <Text style={styles.introduction}>
+                    Select a symptom to learn more about it and what actions to take.
+                </Text>
 
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Common Symptoms</Text>
-                    {symptom.symptoms.map((symptom, index) => (
-                        <View key={index} style={styles.listItem}>
-                            <MaterialIcons name="fiber-manual-record" size={8} color={colors.primary.DEFAULT} style={styles.bullet} />
-                            <Text style={styles.listText}>{symptom}</Text>
+                {symptoms.map((symptom) => (
+                    <TouchableOpacity
+                        key={`symptom-${symptom.title}`}
+                        style={styles.symptomCard}
+                        onPress={() => handleSymptomPress(symptom)}
+                    >
+                        <View style={styles.symptomHeader}>
+                            <Text style={styles.symptomTitle}>{symptom.title}</Text>
+                            <View style={[styles.severityBadge, { 
+                                backgroundColor: symptom.severity === 'High' ? getColor.primaryDark() : 
+                                               symptom.severity === 'Medium' ? getColor.buttonOrange() : getColor.buttonGreen()
+                            }]}>
+                                <Text style={styles.severityText}>{symptom.severity}</Text>
+                            </View>
                         </View>
-                    ))}
-                </View>
-
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Possible Causes</Text>
-                    {symptom.possibleCauses.map((cause, index) => (
-                        <View key={index} style={styles.listItem}>
-                            <MaterialIcons name="fiber-manual-record" size={8} color={colors.primary.DEFAULT} style={styles.bullet} />
-                            <Text style={styles.listText}>{cause}</Text>
+                        <Text style={styles.symptomDescription}>{symptom.description}</Text>
+                        <View style={styles.symptomFooter}>
+                            <MaterialIcons name="chevron-right" size={20} color={getColor.textSecondary()} />
                         </View>
-                    ))}
-                </View>
-
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Severity</Text>
-                    <View style={[styles.severityBadge, { 
-                        backgroundColor: symptom.severity === 'High' ? colors.primary.dark : colors.primary.light 
-                    }]}>
-                        <Text style={styles.severityText}>{symptom.severity}</Text>
-                    </View>
-                </View>
-
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Recommended Actions</Text>
-                    {symptom.recommendedActions.map((action, index) => (
-                        <View key={index} style={styles.listItem}>
-                            <MaterialIcons name="fiber-manual-record" size={8} color={colors.primary.DEFAULT} style={styles.bullet} />
-                            <Text style={styles.listText}>{action}</Text>
-                        </View>
-                    ))}
-                </View>
+                    </TouchableOpacity>
+                ))}
             </ScrollView>
         </View>
     );
@@ -116,13 +160,20 @@ const SymptomDetailsScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.DEFAULT,
-        paddingTop: 0,
+        backgroundColor: getColor.backgroundLight(),
     },
     header: {
         padding: 16,
         marginBottom: 16,
         marginTop: 8,
+        backgroundColor: getColor.backgroundLight(),
+        elevation: 2,
+        shadowColor: getColor.shadow(),
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        marginHorizontal: 16,
+        borderRadius: 12,
     },
     headerRow: {
         flexDirection: 'row',
@@ -134,34 +185,42 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 20,
         fontWeight: '600',
-        color: colors.text.primary,
+        color: getColor.text(),
     },
     scrollView: {
         flex: 1,
     },
     content: {
+        flex: 1,
         padding: 16,
     },
+    introduction: {
+        fontSize: 16,
+        color: getColor.textSecondary(),
+        marginBottom: 24,
+        lineHeight: 24,
+        textAlign: 'center',
+    },
     card: {
-        backgroundColor: colors.background.card,
+        backgroundColor: getColor.backgroundLight(),
         borderRadius: 12,
         padding: 16,
-        marginBottom: 16,
+        marginTop: 8,
         elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowColor: getColor.shadow(),
         shadowOpacity: 0.1,
         shadowRadius: 4,
+        marginHorizontal: 16,
     },
     cardTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: colors.text.primary,
+        color: getColor.text(),
         marginBottom: 12,
     },
     cardText: {
         fontSize: 16,
-        color: colors.text.secondary,
+        color: getColor.textLight(),
         lineHeight: 24,
     },
     listItem: {
@@ -176,7 +235,7 @@ const styles = StyleSheet.create({
     listText: {
         flex: 1,
         fontSize: 16,
-        color: colors.text.secondary,
+        color: getColor.textLight(),
         lineHeight: 24,
     },
     severityBadge: {
@@ -186,9 +245,53 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
     },
     severityText: {
-        color: colors.background.DEFAULT,
+        color: getColor.background(),
         fontSize: 14,
         fontWeight: '600',
+    },
+    errorHeader: {
+        marginTop: 8,
+        backgroundColor: getColor.backgroundLight(),
+        elevation: 2,
+        shadowColor: getColor.shadow(),
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        marginHorizontal: 16,
+        borderRadius: 12,
+    },
+    symptomCard: {
+        backgroundColor: getColor.cardBackground(),
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+        elevation: 2,
+        shadowColor: getColor.shadow(),
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    symptomHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    symptomTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: getColor.text(),
+        flex: 1,
+        marginRight: 12,
+    },
+    symptomDescription: {
+        fontSize: 14,
+        color: getColor.textLight(),
+        lineHeight: 20,
+        marginBottom: 12,
+    },
+    symptomFooter: {
+        alignItems: 'flex-end',
     },
 });
 

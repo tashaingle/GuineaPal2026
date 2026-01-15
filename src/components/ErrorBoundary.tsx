@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { getColor } from '../theme/colors';
 
 interface Props {
   children: React.ReactNode;
@@ -26,12 +28,12 @@ class ErrorBoundary extends React.Component<Props, State> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     // Log the error to console
     console.error('Error caught by ErrorBoundary:', error, errorInfo);
   }
 
-  render() {
+  render(): React.ReactNode {
     if (this.state.hasError) {
       return (
         <View style={styles.container}>
@@ -61,7 +63,7 @@ const styles = StyleSheet.create({
   },
   message: {
     textAlign: 'center',
-    color: '#666',
+    color: getColor.textLight(),
   },
 });
 

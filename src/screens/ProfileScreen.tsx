@@ -1,6 +1,9 @@
+import AppHeader from '@/components/AppHeader';
 import PetFeatureMenu from '@/components/PetFeatureMenu';
 import { usePets } from '@/contexts/PetContext';
+import { getColor } from '@/theme/colors';
 import { calculateAge, formatAge } from '@/utils/dateUtils';
+import { loadPets } from '@/utils/petStorage';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -17,30 +20,35 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GuineaPig } from '../types/guineaPig';
+// Pet type not needed - using GuineaPig
 
-const ProfileScreen = () => {
+const ProfileScreen = (): JSX.Element => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { petId } = params;
   const { pets, deletePet } = usePets();
-  const [pet, setPet] = useState<GuineaPig | null>(pets.find(p => p.id === petId) || null);
+  const [pet, setPet] = useState<GuineaPig | null>((pets.find(p => p.id === petId) as GuineaPig) || null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
 
   // Load fresh pet data when needed
-  const refreshPetData = useCallback(() => {
+  const refreshPetData = useCallback(async (): Promise<void> => {
     try {
       setIsLoading(true);
       setError(null);
-      const freshPet = pets.find(p => p.id === petId);
+      
+      // Load fresh data from storage instead of relying on context
+      const allPets = await loadPets();
+      const freshPet = allPets.find((p: GuineaPig) => p.id === petId);
+      
       if (!freshPet) {
         setError('Pet not found');
         Alert.alert('Error', 'Pet not found');
         router.back();
         return;
       }
-      setPet(freshPet);
+      setPet(freshPet as GuineaPig);
     } catch (error) {
       console.error('Failed to refresh pet data:', error);
       setError('Failed to load pet data');
@@ -48,14 +56,16 @@ const ProfileScreen = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [router, pets, petId]);
+  }, [router, petId]);
 
   // Refresh pet data when the screen comes into focus
   useEffect(() => {
     refreshPetData();
   }, [refreshPetData]);
 
-  const handleDelete = useCallback(async () => {
+
+
+  const handleDelete = useCallback(async (): Promise<void> => {
     if (!petId) {
       Alert.alert('Error', 'Cannot delete pet: ID not found');
       return;
@@ -72,7 +82,7 @@ const ProfileScreen = () => {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: async () => {
+          onPress: async (): Promise<void> => {
             try {
               setIsLoading(true);
               await deletePet(petId);
@@ -89,7 +99,7 @@ const ProfileScreen = () => {
     );
   }, [router, pet?.name, petId, deletePet]);
 
-  const handleEditPress = () => {
+  const handleEditPress = (): void => {
     if (!pet) return;
     router.push({
       pathname: '/(stack)/add-edit-pet',
@@ -107,7 +117,7 @@ const ProfileScreen = () => {
     });
   };
 
-  const handleFeaturePress = (feature: string) => {
+  const handleFeaturePress = (feature: string): void => {
     if (!pet) return;
     const currentPet = pet;
 
@@ -144,7 +154,7 @@ const ProfileScreen = () => {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size={'large' as ActivityIndicatorProps['size']} color="#5D4037" />
+          <ActivityIndicator size={'large' as ActivityIndicatorProps['size']} color={getColor.brown()} />
         </View>
       </View>
     );
@@ -154,7 +164,7 @@ const ProfileScreen = () => {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.errorContainer}>
-          <MaterialIcons name="error-outline" size={48} color="#D32F2F" />
+          <MaterialIcons name="error-outline" size={48} color={getColor.error()} />
           <Text style={styles.errorText}>{error || 'Pet not found'}</Text>
           <TouchableOpacity
             style={styles.retryButton}
@@ -169,28 +179,20 @@ const ProfileScreen = () => {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.headerContainer}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
+      <AppHeader title={pet.name} />
+      <View style={styles.headerActions}>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={handleEditPress}
         >
-          <MaterialIcons name="arrow-back" size={24} color="#5D4037" />
+          <MaterialIcons name="edit" size={24} color={getColor.success()} />
         </TouchableOpacity>
-        <Text style={styles.header}>{pet.name}</Text>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={handleEditPress}
-          >
-            <MaterialIcons name="edit" size={24} color="#4CAF50" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={handleDelete}
-          >
-            <MaterialIcons name="delete" size={24} color="#D32F2F" />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={handleDelete}
+        >
+          <MaterialIcons name="delete" size={24} color={getColor.error()} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
@@ -204,14 +206,14 @@ const ProfileScreen = () => {
           <View style={styles.infoContainer}>
             {pet.breed && (
               <View style={styles.infoRow}>
-                <MaterialIcons name="pets" size={20} color="#5D4037" />
+                <MaterialIcons name="pets" size={20} color={getColor.brown()} />
                 <Text style={styles.infoText}>{pet.breed}</Text>
               </View>
             )}
             
             {pet.birthDate && (
               <View style={styles.infoRow}>
-                <MaterialIcons name="cake" size={20} color="#5D4037" />
+                <MaterialIcons name="cake" size={20} color={getColor.brown()} />
                 <Text style={styles.infoText}>
                   {formatAge(calculateAge(pet.birthDate))}
                 </Text>
@@ -223,7 +225,7 @@ const ProfileScreen = () => {
                 <MaterialIcons 
                   name={pet.gender === 'male' ? 'person' : pet.gender === 'female' ? 'person-outline' : 'help'} 
                   size={20} 
-                  color="#5D4037" 
+                  color={getColor.brown()} 
                 />
                 <Text style={styles.infoText}>
                   {pet.gender.charAt(0).toUpperCase() + pet.gender.slice(1)}
@@ -232,11 +234,44 @@ const ProfileScreen = () => {
               </View>
             )}
 
+            {/* Mate Information */}
+            {pet.mate && pet.mate !== pet.id && (
+              <View style={styles.infoRow}>
+                <MaterialIcons name="favorite" size={20} color={getColor.primary()} />
+                <Text style={styles.infoText}>
+                  Mate: {pets.find(p => p.id === pet.mate)?.name || 'Unknown'}
+                </Text>
+              </View>
+            )}
+
+            {/* Pregnancy Information - Inline with other info */}
             {pet.isPregnant && pet.expectedDueDate && (
               <View style={styles.infoRow}>
-                <MaterialIcons name="event" size={20} color="#5D4037" />
-                <Text style={styles.infoText}>
-                  Due Date: {new Date(pet.expectedDueDate).toLocaleDateString()}
+                <MaterialIcons name="event" size={20} color={getColor.primary()} />
+                <Text style={[styles.infoText, styles.pregnancyDueText]}>
+                  Due: {new Date(pet.expectedDueDate).toLocaleDateString()}
+                </Text>
+              </View>
+            )}
+
+            {pet.isPregnant && pet.expectedDueDate && (
+              <View style={styles.infoRow}>
+                <MaterialIcons name="schedule" size={20} color={getColor.primary()} />
+                <Text style={[styles.infoText, { color: getColor.primary() }]}>
+                  {(() => {
+                    const dueDate = new Date(pet.expectedDueDate);
+                    const today = new Date();
+                    const diffTime = dueDate.getTime() - today.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays > 0) {
+                      return `${diffDays} days until due date`;
+                    } else if (diffDays === 0) {
+                      return 'Due today!';
+                    } else {
+                      return `${Math.abs(diffDays)} days overdue`;
+                    }
+                  })()}
                 </Text>
               </View>
             )}
@@ -245,7 +280,7 @@ const ProfileScreen = () => {
 
         <View style={styles.menuContainer}>
           <Text style={styles.menuTitle}>Care & Health</Text>
-          <PetFeatureMenu pet={pet} onFeaturePress={handleFeaturePress} />
+          <PetFeatureMenu _pet={pet} onFeaturePress={handleFeaturePress} />
         </View>
       </ScrollView>
     </View>
@@ -257,47 +292,18 @@ ProfileScreen.displayName = 'ProfileScreen';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF8E1',
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 8,
-  },
-  header: {
-    flex: 1,
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#5D4037',
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  editButton: {
-    padding: 8,
-    marginRight: 8,
-  },
-  deleteButton: {
-    padding: 8,
+    backgroundColor: getColor.backgroundLight(),
   },
   content: {
     flex: 1,
   },
   profileSection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: getColor.cardBackground(),
     margin: 16,
     padding: 16,
     borderRadius: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: getColor.shadow(),
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -318,7 +324,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 16,
-    color: '#5D4037',
+    color: getColor.brown(),
   },
   menuContainer: {
     padding: 16,
@@ -326,7 +332,7 @@ const styles = StyleSheet.create({
   menuTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#5D4037',
+    color: getColor.brown(),
     marginBottom: 16,
   },
   loadingContainer: {
@@ -342,20 +348,38 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#D32F2F',
+    color: getColor.error(),
     textAlign: 'center',
     marginTop: 12,
     marginBottom: 24,
   },
   retryButton: {
-    backgroundColor: '#5D4037',
+    backgroundColor: getColor.brown(),
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: getColor.background(),
     fontSize: 16,
+    fontWeight: '600',
+  },
+  editButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  deleteButton: {
+    padding: 8,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 8,
+  },
+  pregnancyDueText: {
+    color: getColor.primary(),
     fontWeight: '600',
   },
 });

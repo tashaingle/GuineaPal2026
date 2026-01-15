@@ -30,6 +30,6 @@ export function IconSymbol({
   size?: number;
   color: string | OpaqueColorValue;
   style?: StyleProp<TextStyle>;
-}) {
+}): React.JSX.Element {
   return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
 }

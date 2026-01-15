@@ -1,8 +1,19 @@
 import LoginScreen from '@/screens/auth/LoginScreen';
 import { useRouter } from 'expo-router';
+import { Stack } from 'expo-router/stack';
 import React from 'react';
 
-export default function Login() {
+export default function LoginRoute(): JSX.Element {
   const router = useRouter();
-  return <LoginScreen router={router} />;
+
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          headerShown: false,
+        }}
+      />
+      <LoginScreen router={router} />
+    </>
+  );
 } 

@@ -1,5 +1,5 @@
 import { GuineaPig } from '@/types/guineaPig';
-import { loadPets } from '@/utils/storage';
+import { Pet } from '@/types/pet';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -13,7 +13,8 @@ import {
     View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import colors from '../theme/colors';
+import { getColor } from '../theme/colors';
+import { getPets } from '../utils/storage';
 
 interface FloorTimeSession {
     id: string;
@@ -25,41 +26,53 @@ interface FloorTimeSession {
     pets: string[];
 }
 
-const FloorTimeLogsScreen = () => {
+const FloorTimeLogsScreen = (): JSX.Element => {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const [sessions, setSessions] = useState<FloorTimeSession[]>([]);
     const [pets, setPets] = useState<GuineaPig[]>([]);
+    // const [isLoading, setIsLoading] = useState<boolean>(true);
+    // const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         loadData();
     }, []);
 
-    const loadData = async () => {
+    const loadData = async (): Promise<void> => {
         try {
+            // setIsLoading(true);
             const [savedSessions, savedPets] = await Promise.all([
                 AsyncStorage.getItem('floor_time_sessions'),
-                loadPets()
+                getPets()
             ]);
             
-            if (savedSessions) {
-                const parsedSessions = JSON.parse(savedSessions);
-                // Sort sessions by date in descending order (newest first)
-                parsedSessions.sort((a: FloorTimeSession, b: FloorTimeSession) => 
-                    new Date(b.date).getTime() - new Date(a.date).getTime()
-                );
-                setSessions(parsedSessions);
-            }
-            if (savedPets) {
-                setPets(savedPets);
-            }
+            const mapPetToGuineaPig = (pet: Pet): GuineaPig => {
+                return {
+                    id: pet.id,
+                    name: pet.name,
+                    breed: pet.breed,
+                    birthDate: pet.birthDate,
+                    weight: pet.weight,
+                    gender: pet.gender,
+                    image: pet.image,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                };
+            };
+
+            const sessions = savedSessions ? JSON.parse(savedSessions) : [];
+            const pets = savedPets.map(mapPetToGuineaPig);
+            setSessions(sessions);
+            setPets(pets);
         } catch (err) {
             console.error('Failed to load data:', err);
             Alert.alert('Error', 'Failed to load saved data');
+        } finally {
+            // setIsLoading(false);
         }
     };
 
-    const formatDuration = (seconds: number) => {
+    const formatDuration = (seconds: number): string => {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
         if (hours > 0) {
@@ -68,7 +81,7 @@ const FloorTimeLogsScreen = () => {
         return `${minutes}m`;
     };
 
-    const handleDeleteSession = async (sessionId: string) => {
+    const handleDeleteSession = async (sessionId: string): Promise<void> => {
         Alert.alert(
             'Delete Session',
             'Are you sure you want to delete this session?',
@@ -95,7 +108,7 @@ const FloorTimeLogsScreen = () => {
         );
     };
 
-    const renderSessions = () => {
+    const renderSessions = (): JSX.Element => {
         if (sessions.length === 0) {
             return (
                 <View style={styles.emptyState}>
@@ -113,7 +126,7 @@ const FloorTimeLogsScreen = () => {
                                 <MaterialIcons 
                                     name={session.location === 'floor' ? 'home' : 'grass'} 
                                     size={24} 
-                                    color={colors.primary.DEFAULT} 
+                                    color={getColor.primary()} 
                                 />
                                 <Text style={styles.sessionDuration}>
                                     {formatDuration(session.duration)}
@@ -127,7 +140,7 @@ const FloorTimeLogsScreen = () => {
                                     style={styles.deleteButton}
                                     onPress={() => handleDeleteSession(session.id)}
                                 >
-                                    <MaterialIcons name="delete-outline" size={20} color={colors.status.error} />
+                                    <MaterialIcons name="delete-outline" size={20} color={getColor.error()} />
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -155,9 +168,9 @@ const FloorTimeLogsScreen = () => {
                     style={styles.backButton}
                     onPress={() => router.back()}
                 >
-                    <MaterialIcons name="arrow-back" size={24} color={colors.primary.DEFAULT} />
+                    <MaterialIcons name="arrow-back" size={24} color={getColor.primary()} />
                 </TouchableOpacity>
-                <Text style={styles.title}>Floor Time Logs</Text>
+                <Text style={styles.headerTitle}>Floor Time Logs</Text>
                 <View style={styles.placeholder} />
             </View>
 
@@ -171,25 +184,26 @@ const FloorTimeLogsScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.DEFAULT,
+        backgroundColor: getColor.backgroundLight(),
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: getColor.white(),
         borderBottomWidth: 1,
-        borderBottomColor: colors.border.DEFAULT,
-        backgroundColor: colors.background.card,
+        borderBottomColor: getColor.border(),
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: getColor.text(),
     },
     backButton: {
         padding: 8,
         marginLeft: -8,
-    },
-    title: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: colors.text.primary,
     },
     placeholder: {
         width: 40,
@@ -199,15 +213,16 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     sessionsContainer: {
-        marginTop: 16,
+        flex: 1,
+        padding: 16,
     },
     sessionCard: {
-        backgroundColor: colors.white,
-        borderRadius: 12,
+        backgroundColor: getColor.cardBackground(),
+        borderRadius: 8,
         padding: 16,
         marginBottom: 12,
         elevation: 2,
-        shadowColor: '#000',
+        shadowColor: getColor.shadow(),
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -221,28 +236,28 @@ const styles = StyleSheet.create({
     sessionInfo: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
     },
     sessionDuration: {
+        marginLeft: 8,
         fontSize: 16,
-        fontWeight: '600',
-        color: colors.text.primary,
+        fontWeight: 'bold',
+        color: getColor.text(),
     },
     sessionActions: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
     },
     sessionTime: {
         fontSize: 14,
-        color: colors.text.secondary,
+        color: getColor.textLight(),
+        marginRight: 8,
     },
     deleteButton: {
         padding: 4,
     },
     sessionNotes: {
         fontSize: 14,
-        color: colors.text.secondary,
+        color: getColor.textLight(),
         marginBottom: 8,
     },
     petTags: {
@@ -251,20 +266,23 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     petTag: {
-        backgroundColor: colors.primary.light,
-        color: colors.primary.DEFAULT,
+        fontSize: 12,
+        color: getColor.textLight(),
+        backgroundColor: getColor.borderLight(),
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
-        fontSize: 12,
     },
     emptyState: {
+        flex: 1,
+        justifyContent: 'center',
         alignItems: 'center',
-        padding: 32,
+        padding: 16,
     },
     emptyStateText: {
         fontSize: 16,
-        color: colors.text.secondary,
+        color: getColor.textLight(),
+        textAlign: 'center',
     },
 });
 

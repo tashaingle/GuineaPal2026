@@ -1,36 +1,38 @@
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { BlurView } from 'expo-blur';
+import { getColor } from '@/theme/colors';
 import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export function useBottomTabOverflow() {
+export function useBottomTabOverflow(): number {
   const insets = useSafeAreaInsets();
   return insets.bottom;
 }
 
-type TabBarBackgroundProps = {
-  children: React.ReactNode;
+const TabBarBackground = (): JSX.Element => {
+  return (
+    <View style={styles.container}>
+      <View style={styles.border} />
+    </View>
+  );
 };
 
-export function TabBarBackground({ children }: TabBarBackgroundProps) {
-  const colorScheme = useColorScheme();
-  const bottomInset = useBottomTabOverflow();
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+    backgroundColor: getColor.background(),
+  },
+  border: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 0.5,
+    backgroundColor: getColor.border(),
+  },
+});
 
-  return (
-    <BlurView
-      tint={colorScheme}
-      intensity={80}
-      style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: 49 + bottomInset,
-        backgroundColor: Colors[colorScheme].background,
-      }}
-    >
-      {children}
-    </BlurView>
-  );
-} 
+export default TabBarBackground; 
