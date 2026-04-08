@@ -7,21 +7,17 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "android": {
-        "gradleCommand": ":app:assembleDebug",
-        "buildType": "apk"
+      "node": "22.14.0",
+      "ios": {
+        "resourceClass": "m-medium"
       }
     },
     "preview": {
       "distribution": "internal",
-      "android": {
-        "buildType": "apk"
-      }
+      "node": "22.14.0"
     },
     "production": {
-      "android": {
-        "buildType": "app-bundle"
-      }
+      "node": "22.14.0"
     }
   },
   "submit": {
