@@ -1,0 +1,34 @@
+export type RootStackParamList = {
+  Home: undefined;
+  HealthCheck: undefined;
+  PetProfile: { petId: string };
+  Settings: undefined;
+  Login: undefined;
+  Register: undefined;
+  ForgotPassword: undefined;
+  Welcome: undefined;
+  PetList: undefined;
+  Profile: undefined;
+  AddEditPet: undefined;
+  BreedSelection: undefined;
+  Checklist: undefined;
+  GuineaGram: undefined;
+  CareGuide: undefined;
+  CareGuideSection: undefined;
+  SafeFoods: undefined;
+  NewOwnerChecklist: undefined;
+  MedicalRecords: undefined;
+  WeightTracker: undefined;
+  MoodTracker: undefined;
+  CareSchedule: undefined;
+  DietManager: undefined;
+  Achievements: undefined;
+  BondingTracker: undefined;
+  BondingTimer: undefined;
+  BondingGuide: undefined;
+  SymptomChecker: undefined;
+  FamilyTree: undefined;
+  WasteLog: undefined;
+  AddWasteLog: undefined;
+  // Add other screen types as needed
+}; 
