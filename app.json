@@ -22,7 +22,7 @@
       "supportsTablet": true,
       "jsEngine": "hermes",
       "config": {
-        "googleMobileAdsAppId": "ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy"
+      "googleMobileAdsAppId": "ca-app-pub-1405426793776119~3196291007"
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -135,7 +135,14 @@
           }
         }
       ],
-      "react-native-google-mobile-ads"
+      [
+  "react-native-google-mobile-ads",
+  {
+    "androidAppId": "ca-app-pub-1405426793776119~1660161441",
+    "iosAppId": "ca-app-pub-1405426793776119~3196291007"
+  }
+]
+
     ],
     "runtimeVersion": {
       "policy": "appVersion"
