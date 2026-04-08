@@ -134,7 +134,8 @@
             "gradleCommand": ":app:assembleDebug"
           }
         }
-      ]
+      ],
+      "react-native-google-mobile-ads"
     ],
     "runtimeVersion": {
       "policy": "appVersion"

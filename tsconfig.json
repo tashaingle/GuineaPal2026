@@ -4,44 +4,20 @@
     "strict": true,
     "jsx": "react-native",
     "jsxImportSource": "react",
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "customConditions": [
-      "react-native"
-    ],
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "baseUrl": "./",
     "paths": {
-      "@/*": [
-        "src/*"
-      ],
-      "@components/*": [
-        "src/components/*"
-      ],
-      "@screens/*": [
-        "src/screens/*"
-      ],
-      "@navigation/*": [
-        "src/navigation/*"
-      ],
-      "@assets/*": [
-        "assets/*"
-      ],
-      "@utils/*": [
-        "src/utils/*"
-      ],
-      "@constants/*": [
-        "src/constants/*"
-      ],
-      "@types/*": [
-        "src/types/*"
-      ]
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@screens/*": ["src/screens/*"],
+      "@navigation/*": ["src/navigation/*"],
+      "@assets/*": ["assets/*"],
+      "@utils/*": ["src/utils/*"],
+      "@constants/*": ["src/constants/*"],
+      "@types/*": ["src/types/*"]
     },
-    "types": [
-      "jest",
-      "node",
-      "react",
-      "react-native"
-    ],
+    "types": ["jest", "node", "react", "react-native"],
     "esModuleInterop": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
@@ -50,14 +26,8 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "target": "esnext",
-    "lib": [
-      "esnext",
-      "dom"
-    ],
-    "typeRoots": [
-      "./node_modules/@types",
-      "./src/types"
-    ],
+    "lib": ["esnext", "dom"],
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "incremental": true,
     "noUncheckedIndexedAccess": true,
     "strictNullChecks": true,

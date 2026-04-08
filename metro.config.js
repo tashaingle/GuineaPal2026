@@ -1,5 +1,4 @@
-// Learn more https://docs.expo.io/guides/customizing-metro
-const { getDefaultConfig } = require('@expo/metro-config');
+const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
 
 const projectRoot = __dirname;
@@ -13,7 +12,7 @@ const config = {
   watchFolders: [workspaceRoot],
   resolver: {
     ...defaultConfig.resolver,
-    sourceExts: ['jsx', 'js', 'ts', 'tsx', 'json'],
+    sourceExts: [...defaultConfig.resolver.sourceExts, 'jsx', 'js', 'ts', 'tsx', 'json'],
     assetExts: [...defaultConfig.resolver.assetExts, 'ttf', 'otf', 'woff', 'woff2'],
     nodeModulesPaths: [
       path.resolve(projectRoot, 'node_modules'),
@@ -26,4 +25,4 @@ const config = {
   },
 };
 
-module.exports = config; 
+module.exports = config;
