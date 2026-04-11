@@ -1,5 +1,5 @@
+import * as InAppPurchases from 'expo-iap';
 import { Platform } from 'react-native';
-import * as InAppPurchases from 'react-native-iap';
 
 // Product IDs
 const PREMIUM_PRODUCT_ID = Platform.select({
