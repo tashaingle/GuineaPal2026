@@ -1,8 +1,8 @@
 import { purchasePremium, restorePurchases } from '@/services/purchases';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as InAppPurchases from 'expo-iap';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import * as InAppPurchases from 'react-native-iap';
 
 interface PremiumContextType {
   isPremium: boolean;
