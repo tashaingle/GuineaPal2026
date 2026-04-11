@@ -121,20 +121,23 @@
       ],
      
       [
-        "expo-build-properties",
-        {
-          "android": {
-            "compileSdkVersion": 34,
-            "targetSdkVersion": 34,
-            "buildToolsVersion": "34.0.0",
-            "kotlinVersion": "1.9.25",
-            "extraMavenRepos": [
-              "https://maven.google.com"
-            ],
-            "gradleCommand": ":app:assembleDebug"
-          }
-        }
+  "expo-build-properties",
+  {
+    "android": {
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "buildToolsVersion": "34.0.0",
+      "kotlinVersion": "1.9.25",
+      "extraMavenRepos": [
+        "https://maven.google.com"
       ],
+      "gradleCommand": ":app:assembleDebug"
+    },
+    "ios": {
+      "useFrameworks": "static"
+    }
+  }
+],
       [
   "react-native-google-mobile-ads",
   {
