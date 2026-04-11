@@ -132,10 +132,8 @@
         "https://maven.google.com"
       ],
       "gradleCommand": ":app:assembleDebug"
-    },
-    "ios": {
-      "useFrameworks": "static"
     }
+    
   }
 ],
       [
