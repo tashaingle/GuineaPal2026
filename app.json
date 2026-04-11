@@ -119,7 +119,7 @@
           "androidClientId": "1405426793776119-1660161441.apps.googleusercontent.com"
         }
       ],
-      "react-native-iap",
+     
       [
         "expo-build-properties",
         {
