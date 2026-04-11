@@ -19,7 +19,6 @@ import PetListScreen from '@/screens/PetListScreen';
 import ProfileScreen from '@/screens/ProfileScreen';
 import WelcomeScreen from '@/screens/WelcomeScreen';
 import colors from '@/theme/colors';
-import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import * as React from 'react';
 
@@ -125,11 +124,7 @@ const RootStack = () => {
 };
 
 const RootNavigator = () => {
-  return (
-    <NavigationContainer>
-      <RootStack />
-    </NavigationContainer>
-  );
+  return <RootStack />;
 };
 
 export default RootNavigator;

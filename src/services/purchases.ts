@@ -1,18 +1,23 @@
-import * as InAppPurchases from 'expo-iap';
+import {
+  flushFailedPurchasesCachedAsPendingAndroid,
+  getAvailablePurchases,
+  endConnection as iapEndConnection,
+  getProducts as iapGetProducts,
+  initConnection,
+  requestPurchase,
+} from 'expo-iap';
 import { Platform } from 'react-native';
 
-// Product IDs
 const PREMIUM_PRODUCT_ID = Platform.select({
   android: 'com.tasha.guineapal.premium',
   ios: 'com.tasha.guineapal.premium',
-}) || 'com.tasha.guineapal.premium'; // Fallback to Android ID
+}) || 'com.tasha.guineapal.premium';
 
-// Initialize IAP
 export const initializePurchases = async () => {
   try {
-    await InAppPurchases.initConnection();
+    await initConnection();
     if (Platform.OS === 'android') {
-      await InAppPurchases.flushFailedPurchasesCachedAsPendingAndroid();
+      await flushFailedPurchasesCachedAsPendingAndroid();
     }
   } catch (error) {
     console.error('Failed to initialize purchases:', error);
@@ -20,12 +25,9 @@ export const initializePurchases = async () => {
   }
 };
 
-// Get available products
 export const getProducts = async () => {
   try {
-    const products = await InAppPurchases.getProducts({
-      skus: [PREMIUM_PRODUCT_ID],
-    });
+    const products = await iapGetProducts([PREMIUM_PRODUCT_ID]);
     return products;
   } catch (error) {
     console.error('Failed to get products:', error);
@@ -33,13 +35,9 @@ export const getProducts = async () => {
   }
 };
 
-// Purchase premium
 export const purchasePremium = async () => {
   try {
-    const purchase = await InAppPurchases.requestPurchase({
-      sku: PREMIUM_PRODUCT_ID,
-      andDangerouslyFinishTransactionAutomaticallyIOS: false,
-    });
+    const purchase = await requestPurchase({ sku: PREMIUM_PRODUCT_ID });
     return purchase;
   } catch (error) {
     console.error('Failed to purchase premium:', error);
@@ -47,27 +45,20 @@ export const purchasePremium = async () => {
   }
 };
 
-// Restore purchases
 export const restorePurchases = async () => {
   try {
-    if (Platform.OS === 'ios') {
-      const purchases = await InAppPurchases.getAvailablePurchases();
-      return purchases;
-    } else {
-      const purchases = await InAppPurchases.getAvailablePurchases();
-      return purchases;
-    }
+    const purchases = await getAvailablePurchases();
+    return purchases;
   } catch (error) {
     console.error('Failed to restore purchases:', error);
     throw error;
   }
 };
 
-// End connection when app is closed
 export const endConnection = async () => {
   try {
-    await InAppPurchases.endConnection();
+    await iapEndConnection();
   } catch (error) {
     console.error('Failed to end connection:', error);
   }
-}; 
+};
