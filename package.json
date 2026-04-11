@@ -162,8 +162,7 @@
       "reactNativeDirectoryCheck": {
         "listUnknownPackages": false,
         "exclude": [
-          "react-native-chart-kit",
-          "react-native-iap"
+          "react-native-chart-kit"
         ]
       }
     }
