@@ -1,6 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { RootStackParamList } from '@/navigation/types';
 import colors from '@/theme/colors';
+import { MaterialIcons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import React from 'react';

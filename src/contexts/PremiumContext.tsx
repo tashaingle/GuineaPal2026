@@ -54,7 +54,7 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
         // Finish the transaction
         if (Platform.OS === 'ios') {
           await InAppPurchases.finishTransaction({ 
-            purchase: purchase as InAppPurchases.ProductPurchase 
+            purchase: purchase as any
           });
         }
       }

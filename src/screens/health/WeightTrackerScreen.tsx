@@ -8,16 +8,16 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    FlatList,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Dimensions,
+  FlatList,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 
@@ -225,7 +225,7 @@ const WeightTrackerScreen = () => {
           </View>
         ) : weightRecords.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <MaterialIcons name="scale" size={48} color="#BDBDBD" />
+            <MaterialIcons name="straighten" size={48} color="#BDBDBD" />
             <Text style={styles.emptyText}>No weight records yet</Text>
             <Text style={styles.emptySubtext}>
               Tap the + button to add your first weight record

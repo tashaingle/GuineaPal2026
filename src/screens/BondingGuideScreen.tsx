@@ -3,11 +3,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { Card } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -129,7 +129,7 @@ const BondingGuideScreen = ({ navigation }: Props) => {
         <Card style={[styles.card, styles.emergencyCard]}>
           <Card.Content>
             <View style={styles.cardHeader}>
-              <MaterialIcons name="emergency" size={24} color="#F44336" />
+              <MaterialIcons name="warning" size={24} color="#F44336" />
               <Text style={[styles.cardTitle, { color: '#F44336' }]}>
                 When to Separate
               </Text>

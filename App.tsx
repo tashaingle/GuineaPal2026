@@ -18,7 +18,7 @@ function AppContent() {
   }
 
   if (!user) {
-    return <LoginScreen />;
+    return <LoginScreen navigation={undefined as any} route={undefined as any} />;
   }
 
   return <RootNavigator />;

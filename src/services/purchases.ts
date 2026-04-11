@@ -1,24 +1,16 @@
 import {
-  flushFailedPurchasesCachedAsPendingAndroid,
+  fetchProducts,
   getAvailablePurchases,
   endConnection as iapEndConnection,
-  getProducts as iapGetProducts,
   initConnection,
   requestPurchase,
 } from 'expo-iap';
-import { Platform } from 'react-native';
 
-const PREMIUM_PRODUCT_ID = Platform.select({
-  android: 'com.tasha.guineapal.premium',
-  ios: 'com.tasha.guineapal.premium',
-}) || 'com.tasha.guineapal.premium';
+const PREMIUM_PRODUCT_ID = 'com.tasha.guineapal.premium';
 
 export const initializePurchases = async () => {
   try {
     await initConnection();
-    if (Platform.OS === 'android') {
-      await flushFailedPurchasesCachedAsPendingAndroid();
-    }
   } catch (error) {
     console.error('Failed to initialize purchases:', error);
     throw error;
@@ -27,7 +19,7 @@ export const initializePurchases = async () => {
 
 export const getProducts = async () => {
   try {
-    const products = await iapGetProducts([PREMIUM_PRODUCT_ID]);
+    const products = await fetchProducts({ skus: [PREMIUM_PRODUCT_ID], type: 'in-app' });
     return products;
   } catch (error) {
     console.error('Failed to get products:', error);
@@ -37,7 +29,13 @@ export const getProducts = async () => {
 
 export const purchasePremium = async () => {
   try {
-    const purchase = await requestPurchase({ sku: PREMIUM_PRODUCT_ID });
+    const purchase = await requestPurchase({
+      request: {
+        apple: { sku: PREMIUM_PRODUCT_ID },
+        google: { skus: [PREMIUM_PRODUCT_ID] }
+      },
+      type: 'in-app'
+    });
     return purchase;
   } catch (error) {
     console.error('Failed to purchase premium:', error);
