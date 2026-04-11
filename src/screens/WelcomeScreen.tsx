@@ -1,18 +1,17 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { RootStackParamList } from '@/navigation/types';
 import colors from '@/theme/colors';
-import { MaterialIcons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import React from 'react';
 import {
-    Alert,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    useWindowDimensions
+  Alert,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions
 } from 'react-native';
 
 type Props = {
@@ -34,9 +33,8 @@ const NavigationButton = React.memo(({ title, icon, color, onPress, style }: {
     onPress={onPress}
   >
     <View style={styles.navigationButtonContent}>
-      <MaterialIcons name={icon} size={24} color={color} />
-      <Text style={[styles.navigationButtonText, { color }]}>{title}</Text>
-    </View>
+  <Text style={[styles.navigationButtonText, { color }]}>{title}</Text>
+</View>
   </TouchableOpacity>
 ));
 
@@ -140,7 +138,7 @@ const WelcomeScreen = ({ navigation }: Props) => {
           style={styles.logoutButton}
           onPress={handleLogout}
         >
-          <MaterialIcons name="logout" size={20} color={colors.text.secondary} />
+      
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
